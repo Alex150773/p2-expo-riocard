@@ -8,6 +8,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -111,10 +112,19 @@ const servicosMenu = [
   },
 ];
 
+function normalizarTexto(texto: string): string {
+  return texto
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
 export default function ServicosScreen() {
   const [servicosApi, setServicosApi] = useState<ServicoApi[]>(SERVICOS_API_FALLBACK);
   const [carregando, setCarregando] = useState(true);
   const [modoDemonstrativo, setModoDemonstrativo] = useState(false);
+  const [busca, setBusca] = useState('');
 
   useEffect(() => {
     let ativo = true;
@@ -158,6 +168,25 @@ export default function ServicosScreen() {
     );
   }
 
+  const termoBusca = normalizarTexto(busca);
+
+  const servicosApiFiltrados = servicosApi.filter((item) => {
+    if (!termoBusca) return true;
+    const nome = normalizarTexto(String(item.nome ?? ''));
+    const descricao = normalizarTexto(String(item.descricao ?? ''));
+    return nome.includes(termoBusca) || descricao.includes(termoBusca);
+  });
+
+  const servicosMenuFiltrados = servicosMenu.filter((item) => {
+    if (!termoBusca) return true;
+    return normalizarTexto(item.nome).includes(termoBusca);
+  });
+
+  const nenhumResultado =
+    !carregando &&
+    servicosApiFiltrados.length === 0 &&
+    servicosMenuFiltrados.length === 0;
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
@@ -177,68 +206,110 @@ export default function ServicosScreen() {
         style={styles.container}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         <Text style={styles.title}>Serviços</Text>
 
-        <View style={styles.destaqueBox}>
-          <View style={styles.destaqueHeader}>
-            <Text style={styles.destaqueTitulo}>Serviços em destaque</Text>
-            <Text style={styles.destaqueBadge}>
-              {modoDemonstrativo ? 'Local' : 'API'}
-            </Text>
-          </View>
-
-          {carregando ? (
-            <ActivityIndicator color={AZUL} style={{ marginVertical: 12 }} />
-          ) : (
-            servicosApi.map((item) => {
-              const idStr = String(item.id);
-              const icone = ICONES_POR_ID[idStr] ?? 'apps-outline';
-              return (
-                <TouchableOpacity
-                  key={idStr}
-                  style={styles.destaqueItem}
-                  onPress={() => abrirServicoApi(item)}
-                >
-                  <Ionicons name={icone as any} size={24} color={AZUL} />
-                  <View style={styles.destaqueTextoBox}>
-                    <Text style={styles.destaqueNome}>
-                      {String(item.nome ?? 'Serviço')}
-                    </Text>
-                    {item.descricao ? (
-                      <Text style={styles.destaqueDescricao}>
-                        {String(item.descricao)}
-                      </Text>
-                    ) : null}
-                  </View>
-                  <Ionicons name="chevron-forward" size={20} color="#999" />
-                </TouchableOpacity>
-              );
-            })
-          )}
+        <View style={styles.searchBox}>
+          <Ionicons name="search-outline" size={20} color="#777" />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Buscar serviço..."
+            placeholderTextColor="#888"
+            value={busca}
+            onChangeText={setBusca}
+            autoCorrect={false}
+          />
+          {busca.length > 0 ? (
+            <TouchableOpacity
+              accessibilityLabel="Limpar busca"
+              onPress={() => setBusca('')}
+            >
+              <Ionicons name="close-circle" size={20} color="#888" />
+            </TouchableOpacity>
+          ) : null}
         </View>
 
-        <Text style={styles.subtitulo}>Todos os serviços</Text>
+        {nenhumResultado ? (
+          <View style={styles.emptySearch}>
+            <Ionicons name="search-outline" size={36} color="#999" />
+            <Text style={styles.emptySearchText}>
+              Nenhum serviço encontrado para &quot;{busca}&quot;.
+            </Text>
+            <TouchableOpacity
+              style={styles.clearButton}
+              onPress={() => setBusca('')}
+            >
+              <Text style={styles.clearButtonText}>Limpar filtro</Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
 
-        {servicosMenu.map((item, index) => (
-          <TouchableOpacity
-            key={index}
-            style={styles.serviceRow}
-            onPress={() => {
-              if (item.rota) {
-                router.push(item.rota as any);
-              } else if (item.info) {
-                Alert.alert(item.nome, item.info);
-              }
-            }}
-          >
-            <Ionicons name={item.icone as any} size={25} color={AZUL} />
+        {carregando || servicosApiFiltrados.length > 0 ? (
+          <View style={styles.destaqueBox}>
+            <View style={styles.destaqueHeader}>
+              <Text style={styles.destaqueTitulo}>Serviços em destaque</Text>
+              <Text style={styles.destaqueBadge}>
+                {modoDemonstrativo ? 'Local' : 'API'}
+              </Text>
+            </View>
 
-            <Text style={styles.serviceText}>{item.nome}</Text>
+            {carregando ? (
+              <ActivityIndicator color={AZUL} style={{ marginVertical: 12 }} />
+            ) : (
+              servicosApiFiltrados.map((item) => {
+                const idStr = String(item.id);
+                const icone = ICONES_POR_ID[idStr] ?? 'apps-outline';
+                return (
+                  <TouchableOpacity
+                    key={idStr}
+                    style={styles.destaqueItem}
+                    onPress={() => abrirServicoApi(item)}
+                  >
+                    <Ionicons name={icone as any} size={24} color={AZUL} />
+                    <View style={styles.destaqueTextoBox}>
+                      <Text style={styles.destaqueNome}>
+                        {String(item.nome ?? 'Serviço')}
+                      </Text>
+                      {item.descricao ? (
+                        <Text style={styles.destaqueDescricao}>
+                          {String(item.descricao)}
+                        </Text>
+                      ) : null}
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color="#999" />
+                  </TouchableOpacity>
+                );
+              })
+            )}
+          </View>
+        ) : null}
 
-            <Ionicons name="chevron-forward" size={22} color="#999" />
-          </TouchableOpacity>
-        ))}
+        {servicosMenuFiltrados.length > 0 ? (
+          <>
+            <Text style={styles.subtitulo}>Todos os serviços</Text>
+
+            {servicosMenuFiltrados.map((item, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.serviceRow}
+                onPress={() => {
+                  if (item.rota) {
+                    router.push(item.rota as any);
+                  } else if (item.info) {
+                    Alert.alert(item.nome, item.info);
+                  }
+                }}
+              >
+                <Ionicons name={item.icone as any} size={25} color={AZUL} />
+
+                <Text style={styles.serviceText}>{item.nome}</Text>
+
+                <Ionicons name="chevron-forward" size={22} color="#999" />
+              </TouchableOpacity>
+            ))}
+          </>
+        ) : null}
 
         <View style={styles.extraArea}>
           <Text style={styles.version}>Versão 2.68.7-P</Text>
@@ -374,7 +445,53 @@ const styles = StyleSheet.create({
     color: AZUL,
     fontSize: 27,
     fontWeight: 'bold',
-    marginBottom: 15,
+    marginBottom: 14,
+  },
+
+  searchBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#dce2e8',
+    paddingHorizontal: 12,
+    height: 46,
+    marginBottom: 18,
+    gap: 8,
+  },
+
+  searchInput: {
+    flex: 1,
+    fontSize: 15,
+    color: '#222',
+  },
+
+  emptySearch: {
+    alignItems: 'center',
+    paddingVertical: 28,
+    paddingHorizontal: 16,
+  },
+
+  emptySearchText: {
+    fontSize: 15,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 10,
+  },
+
+  clearButton: {
+    marginTop: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    borderRadius: 8,
+    backgroundColor: AZUL,
+  },
+
+  clearButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 14,
   },
 
   destaqueBox: {
