@@ -41,3 +41,8 @@ example
 # generated native folders
 /ios
 /android
+
+# Configuracoes locais e arquivos temporarios
+.env
+src.zip
+INSTRUCOES-COMMIT*.md
