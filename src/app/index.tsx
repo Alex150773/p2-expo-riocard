@@ -1,6 +1,8 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { AppColors } from '@/constants/theme';
+import { CARTOES_DEMO } from '@/data/cartoes';
+import { useState } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -15,6 +17,11 @@ const AZUL_ESCURO = AppColors.azulEscuro;
 const CINZA = AppColors.cinza;
 
 export default function HomeScreen() {
+  const [cartaoId, setCartaoId] = useState(CARTOES_DEMO[0].id);
+  const [saldoVisivel, setSaldoVisivel] = useState(false);
+  const cartaoSelecionado = CARTOES_DEMO.find((cartao) => cartao.id === cartaoId) ?? CARTOES_DEMO[0];
+  const saldo = cartaoSelecionado.saldoDemonstrativo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
   return (
     <SafeAreaView style={styles.safeArea}>
       {/* Cabeçalho */}
@@ -34,7 +41,7 @@ export default function HomeScreen() {
         {/* Cartão Digital */}
         <View style={styles.digitalCard}>
           <View style={styles.cardTop}>
-            <Text style={styles.cardTitle}>Cartão Digital</Text>
+            <Text style={styles.cardTitle}>{cartaoSelecionado.nome}</Text>
 
             <TouchableOpacity style={styles.rechargeMini} accessibilityRole="button" onPress={() => router.push('/recarga')}>
               <MaterialCommunityIcons
@@ -46,10 +53,31 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
 
-          <View style={styles.balanceRow}>
-            <Text style={styles.balance}>R$ • • • • •</Text>
-            <Ionicons name="eye-off-outline" size={28} color="#fff" />
+          <View style={styles.cardSelector}>
+            {CARTOES_DEMO.map((cartao) => (
+              <TouchableOpacity
+                key={cartao.id}
+                accessibilityRole="button"
+                accessibilityState={{ selected: cartaoId === cartao.id }}
+                onPress={() => { setCartaoId(cartao.id); setSaldoVisivel(false); }}
+                style={[styles.cardSelectorButton, cartaoId === cartao.id && styles.cardSelectorSelected]}
+              >
+                <Text style={styles.cardSelectorText}>{cartao.nome}</Text>
+              </TouchableOpacity>
+            ))}
           </View>
+          <View style={styles.balanceRow}>
+            <Text style={styles.balance}>{saldoVisivel ? saldo : 'R$ • • • • •'}</Text>
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel={saldoVisivel ? 'Ocultar saldo' : 'Mostrar saldo'}
+              onPress={() => setSaldoVisivel((anterior) => !anterior)}
+              hitSlop={12}
+            >
+              <Ionicons name={saldoVisivel ? 'eye-outline' : 'eye-off-outline'} size={28} color="#fff" />
+            </TouchableOpacity>
+          </View>
+          <Text style={styles.demoNotice}>Saldo fictício para demonstração</Text>
 
           <View style={styles.paymentRow}>
             <View style={styles.paymentOption}>
@@ -295,6 +323,11 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
 
+  cardSelector: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 16 },
+  cardSelectorButton: { borderColor: '#fff', borderWidth: 1, borderRadius: 15, paddingVertical: 5, paddingHorizontal: 10 },
+  cardSelectorSelected: { backgroundColor: 'rgba(255,255,255,0.25)' },
+  cardSelectorText: { color: '#fff', fontSize: 12, fontWeight: '600' },
+  demoNotice: { color: '#fff', fontSize: 11, marginTop: 8, opacity: 0.85 },
   balanceRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

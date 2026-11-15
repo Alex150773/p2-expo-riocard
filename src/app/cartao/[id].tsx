@@ -1,4 +1,5 @@
 import { AppColors } from '@/constants/theme';
+import { useState } from 'react';
 import { CARTOES_DEMO } from '@/data/cartoes';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -8,6 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 export default function DetalhesCartaoScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const cartao = CARTOES_DEMO.find((item) => item.id === id);
+  const [saldoVisivel, setSaldoVisivel] = useState(false);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -33,6 +35,17 @@ export default function DetalhesCartaoScreen() {
             <MaterialCommunityIcons name="credit-card-outline" size={42} color="#fff" />
             <Text style={styles.previewName}>{cartao.nome}</Text>
             <Text style={styles.previewNumber}>{cartao.numero}</Text>
+            <View style={styles.balanceRow}>
+              <View>
+                <Text style={styles.balanceLabel}>Saldo demonstrativo</Text>
+                <Text style={styles.balanceValue}>
+                  {saldoVisivel ? cartao.saldoDemonstrativo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 'R$ • • • • •'}
+                </Text>
+              </View>
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel={saldoVisivel ? 'Ocultar saldo' : 'Mostrar saldo'} onPress={() => setSaldoVisivel((atual) => !atual)}>
+                <Ionicons name={saldoVisivel ? 'eye-outline' : 'eye-off-outline'} size={28} color="#fff" />
+              </TouchableOpacity>
+            </View>
           </View>
 
           <Text style={styles.title}>Informações do cartão</Text>
@@ -75,6 +88,9 @@ const styles = StyleSheet.create({
   content: { padding: 18, paddingBottom: 40 },
   cardPreview: { minHeight: 185, borderRadius: 12, padding: 22, justifyContent: 'space-between', marginBottom: 28 },
   previewName: { color: '#fff', fontSize: 22, fontWeight: '700', marginTop: 16 },
+  balanceRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 18 },
+  balanceLabel: { color: '#fff', fontSize: 12 },
+  balanceValue: { color: '#fff', fontSize: 23, fontWeight: '700', marginTop: 5 },
   previewNumber: { color: '#fff', fontSize: 18, marginTop: 5 },
   title: { color: AppColors.azul, fontSize: 24, fontWeight: '700', marginBottom: 16 },
   infoBox: { backgroundColor: '#fff', padding: 18, borderRadius: 12, borderWidth: 1, borderColor: '#e7e7e7' },

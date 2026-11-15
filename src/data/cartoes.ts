@@ -5,6 +5,7 @@ export type Cartao = {
   numero: string;
   cor: string;
   buiHabilitado: boolean;
+  saldoDemonstrativo: number;
 };
 
 export const CARTOES_DEMO: readonly Cartao[] = [
@@ -14,6 +15,7 @@ export const CARTOES_DEMO: readonly Cartao[] = [
     numero: '01.07.03372871-7',
     cor: '#148bd2',
     buiHabilitado: false,
+    saldoDemonstrativo: 42.50,
   },
   {
     id: 'pessoal',
@@ -21,5 +23,6 @@ export const CARTOES_DEMO: readonly Cartao[] = [
     numero: '01.09.14194806-1',
     cor: '#e52a91',
     buiHabilitado: true,
+    saldoDemonstrativo: 18.75,
   },
 ];
