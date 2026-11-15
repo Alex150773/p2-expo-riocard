@@ -1,9 +1,10 @@
 import { AppColors } from '@/constants/theme';
 import { CARTOES_DEMO } from '@/data/cartoes';
 import { Ionicons } from '@expo/vector-icons';
+import { registrarRecarga } from '@/services/historico-recargas';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useRef, useState } from 'react';
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const formatar = (valor: number) => valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -14,6 +15,28 @@ export default function ConfirmarRecargaScreen() {
   const valor = Number(valorParam);
   const valorValido = Number.isFinite(valor) && [10, 20, 30, 50, 100].includes(valor);
   const [confirmado, setConfirmado] = useState(false);
+  const [salvando, setSalvando] = useState(false);
+  const bloqueado = useRef(false);
+
+  async function confirmar() {
+    if (!cartao || !valorValido || bloqueado.current) return;
+    bloqueado.current = true;
+    setSalvando(true);
+    try {
+      await registrarRecarga({
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
+        cartaoId: cartao.id,
+        valor,
+        data: new Date().toISOString(),
+      });
+      setConfirmado(true);
+    } catch {
+      Alert.alert('Não foi possível salvar', 'Tente confirmar novamente. Nenhuma recarga real foi realizada.');
+    } finally {
+      setSalvando(false);
+      bloqueado.current = false;
+    }
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -37,9 +60,12 @@ export default function ConfirmarRecargaScreen() {
           <Text style={styles.title}>Recarga simulada com sucesso!</Text>
           <Text style={styles.description}>Cartão: {cartao.nome}</Text>
           <Text style={styles.description}>Valor: {formatar(valor)}</Text>
-          <Text style={styles.notice}>Nenhuma cobrança ou crédito real foi realizado. Esta operação ainda não foi salva no histórico.</Text>
-          <TouchableOpacity style={styles.button} onPress={() => router.replace('/')}>
-            <Text style={styles.buttonText}>Voltar ao início</Text>
+          <Text style={styles.notice}>Nenhuma cobrança ou crédito real foi realizado. Esta operação foi salva no histórico deste dispositivo.</Text>
+          <TouchableOpacity style={styles.button} onPress={() => router.push('/historico-recargas')}>
+            <Text style={styles.buttonText}>Ver histórico de recargas</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.cancelButton} onPress={() => router.replace('/')}>
+            <Text style={styles.cancelText}>Voltar ao início</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -57,13 +83,13 @@ export default function ConfirmarRecargaScreen() {
               <Text style={styles.label}>Valor</Text>
               <Text style={styles.amount}>{formatar(valor)}</Text>
             </View>
-            <Text style={styles.notice}>Demonstração acadêmica: esta confirmação não realiza pagamento, não altera saldo e não grava histórico.</Text>
+            <Text style={styles.notice}>Demonstração acadêmica: esta confirmação não realiza pagamento, não altera saldo. A operação será registrada apenas neste dispositivo.</Text>
           </ScrollView>
           <TouchableOpacity style={styles.cancelButton} onPress={() => router.back()}>
             <Text style={styles.cancelText}>Alterar valor</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.footerButton} onPress={() => setConfirmado(true)}>
-            <Text style={styles.buttonText}>Confirmar simulação</Text>
+          <TouchableOpacity style={[styles.footerButton, salvando && { opacity: 0.6 }]} disabled={salvando} onPress={confirmar}>
+            <Text style={styles.buttonText}>{salvando ? 'Salvando...' : 'Confirmar simulação'}</Text>
           </TouchableOpacity>
         </>
       )}

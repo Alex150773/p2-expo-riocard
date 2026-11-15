@@ -35,6 +35,13 @@ export default function CartoesScreen() {
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.title}>Meus cartões</Text>
+        <TouchableOpacity
+          accessibilityRole="button"
+          onPress={() => router.push('/historico-recargas')}
+          style={{ alignSelf: 'flex-start', paddingVertical: 12, paddingHorizontal: 14, marginBottom: 14, borderRadius: 8, backgroundColor: '#e9f4ff' }}
+        >
+          <Text style={{ color: AZUL, fontWeight: '700' }}>Ver histórico de recargas</Text>
+        </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.card}
