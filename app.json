@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "P1-expo",
-    "slug": "P1-expo",
+    "name": "P2-expo",
+    "slug": "p2-expo",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "p1expo",
+    "scheme": "p2expo",
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon"
