@@ -1,24 +1,101 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
+  Alert,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { listarUsuariosApi, type UsuarioApi } from '@/services/api';
 
 const AZUL = '#087DDD';
 const CINZA = '#777';
 
+const USUARIO_FALLBACK: UsuarioApi = {
+  id: 'demo',
+  nome: 'Usuário de Demonstração',
+  email: 'demo@example.com',
+};
+
 const opcoes = [
-  { nome: 'Meus dados', icone: 'person-outline' },
-  { nome: 'Termos de uso', icone: 'document-text-outline' },
-  { nome: 'Política de privacidade', icone: 'lock-closed-outline' },
-  { nome: 'Excluir cadastro', icone: 'trash-outline' },
+  { id: 'dados', nome: 'Meus dados', icone: 'person-outline' },
+  { id: 'termos', nome: 'Termos de uso', icone: 'document-text-outline' },
+  { id: 'privacidade', nome: 'Política de privacidade', icone: 'lock-closed-outline' },
+  { id: 'excluir', nome: 'Excluir cadastro', icone: 'trash-outline' },
 ];
 
 export default function PerfilScreen() {
+  const [usuario, setUsuario] = useState<UsuarioApi>(USUARIO_FALLBACK);
+  const [carregando, setCarregando] = useState(true);
+  const [modoDemonstrativo, setModoDemonstrativo] = useState(false);
+
+  useEffect(() => {
+    let ativo = true;
+
+    async function carregarPerfil() {
+      try {
+        const lista = await listarUsuariosApi();
+        if (!ativo) return;
+        if (Array.isArray(lista) && lista.length > 0) {
+          setUsuario(lista[0]);
+          setModoDemonstrativo(false);
+        } else {
+          setUsuario(USUARIO_FALLBACK);
+          setModoDemonstrativo(true);
+        }
+      } catch {
+        if (!ativo) return;
+        setUsuario(USUARIO_FALLBACK);
+        setModoDemonstrativo(true);
+      } finally {
+        if (ativo) setCarregando(false);
+      }
+    }
+
+    carregarPerfil();
+    return () => {
+      ativo = false;
+    };
+  }, []);
+
+  function aoSelecionarOpcao(id: string) {
+    if (id === 'dados') {
+      Alert.alert(
+        'Meus dados',
+        `Nome: ${String(usuario.nome ?? 'Não informado')}\nE-mail: ${String(usuario.email ?? 'Não informado')}\nID: ${String(usuario.id)}`
+      );
+      return;
+    }
+
+    if (id === 'termos') {
+      Alert.alert(
+        'Termos de uso',
+        'Aplicativo acadêmico demonstrativo da disciplina de Desenvolvimento de Aplicativos Híbridos. Nenhuma transação financeira real é efetuada.'
+      );
+      return;
+    }
+
+    if (id === 'privacidade') {
+      Alert.alert(
+        'Política de privacidade',
+        'Os dados exibidos são fictícios e armazenados apenas localmente no aparelho e na API simulada de testes.'
+      );
+      return;
+    }
+
+    if (id === 'excluir') {
+      Alert.alert(
+        'Excluir cadastro',
+        'Operação simulada: em ambiente acadêmico o usuário de demonstração não é removido permanentemente.'
+      );
+    }
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
@@ -34,34 +111,60 @@ export default function PerfilScreen() {
         <View style={{ width: 32 }} />
       </View>
 
-      <View style={styles.container}>
+      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
         <Text style={styles.title}>Perfil</Text>
 
-        {opcoes.map((item, index) => (
-          <TouchableOpacity style={styles.row} key={index}>
+        <View style={styles.cardUsuario}>
+          <View style={styles.avatar}>
+            <Ionicons name="person" size={30} color="#fff" />
+          </View>
+
+          <View style={styles.infoUsuario}>
+            {carregando ? (
+              <ActivityIndicator color={AZUL} />
+            ) : (
+              <>
+                <Text style={styles.nomeUsuario}>
+                  {String(usuario.nome ?? 'Usuário de Demonstração')}
+                </Text>
+                <Text style={styles.emailUsuario}>
+                  {String(usuario.email ?? 'demo@example.com')}
+                </Text>
+                <Text style={styles.statusFonte}>
+                  {modoDemonstrativo
+                    ? 'Modo demonstrativo local (API offline)'
+                    : 'Sincronizado com a API'}
+                </Text>
+              </>
+            )}
+          </View>
+        </View>
+
+        {opcoes.map((item) => (
+          <TouchableOpacity
+            style={styles.row}
+            key={item.id}
+            onPress={() => aoSelecionarOpcao(item.id)}
+          >
             <Ionicons
               name={item.icone as any}
               size={26}
-              color={AZUL}
+              color={item.id === 'excluir' ? '#d33' : AZUL}
             />
 
             <Text
               style={[
                 styles.rowText,
-                item.nome === 'Excluir cadastro' && styles.deleteText,
+                item.id === 'excluir' && styles.deleteText,
               ]}
             >
               {item.nome}
             </Text>
 
-            <Ionicons
-              name="chevron-forward"
-              size={23}
-              color="#999"
-            />
+            <Ionicons name="chevron-forward" size={23} color="#999" />
           </TouchableOpacity>
         ))}
-      </View>
+      </ScrollView>
 
       <View style={styles.bottomNav}>
         <NavItem
@@ -158,15 +261,63 @@ const styles = StyleSheet.create({
     paddingTop: 25,
   },
 
+  scrollContent: {
+    paddingBottom: 24,
+  },
+
   title: {
     color: AZUL,
     fontSize: 27,
     fontWeight: 'bold',
+    marginBottom: 16,
+  },
+
+  cardUsuario: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
     marginBottom: 18,
+    borderWidth: 1,
+    borderColor: '#e2e6ea',
+  },
+
+  avatar: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: AZUL,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 14,
+  },
+
+  infoUsuario: {
+    flex: 1,
+  },
+
+  nomeUsuario: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#222',
+  },
+
+  emailUsuario: {
+    fontSize: 14,
+    color: '#555',
+    marginTop: 2,
+  },
+
+  statusFonte: {
+    fontSize: 12,
+    color: AZUL,
+    marginTop: 4,
+    fontWeight: '500',
   },
 
   row: {
-    minHeight: 72,
+    minHeight: 68,
     flexDirection: 'row',
     alignItems: 'center',
     borderBottomWidth: 1,
