@@ -51,3 +51,26 @@ async function consultar<T>(caminho: string): Promise<T> {
 export const listarCartoesApi = () => consultar<Cartao[]>('/cartoes');
 export const listarUsuariosApi = () => consultar<UsuarioApi[]>('/usuarios');
 export const listarServicosApi = () => consultar<ServicoApi[]>('/servicos');
+
+/** Registra apenas uma operação fictícia. Não altera o saldo do cartão. */
+export async function enviarRecargaApi(recarga: {
+  id: string;
+  cartaoId: string;
+  valor: number;
+  data: string;
+}): Promise<void> {
+  const endereco = obterEnderecoApi();
+  const controlador = new AbortController();
+  const limite = setTimeout(() => controlador.abort(), 8000);
+  try {
+    const resposta = await fetch(`${endereco}/recargas`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(recarga),
+      signal: controlador.signal,
+    });
+    if (!resposta.ok) throw new Error(`A API retornou o código HTTP ${resposta.status}.`);
+  } finally {
+    clearTimeout(limite);
+  }
+}

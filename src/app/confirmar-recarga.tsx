@@ -2,6 +2,7 @@ import { AppColors } from '@/constants/theme';
 import { CARTOES_DEMO } from '@/data/cartoes';
 import { Ionicons } from '@expo/vector-icons';
 import { registrarRecarga } from '@/services/historico-recargas';
+import { enviarRecargaApi } from '@/services/api';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useRef, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -16,6 +17,7 @@ export default function ConfirmarRecargaScreen() {
   const valorValido = Number.isFinite(valor) && [10, 20, 30, 50, 100].includes(valor);
   const [confirmado, setConfirmado] = useState(false);
   const [salvando, setSalvando] = useState(false);
+  const [enviadoApi, setEnviadoApi] = useState(false);
   const bloqueado = useRef(false);
 
   async function confirmar() {
@@ -23,13 +25,20 @@ export default function ConfirmarRecargaScreen() {
     bloqueado.current = true;
     setSalvando(true);
     try {
-      await registrarRecarga({
+      const recarga = {
         id: `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
         cartaoId: cartao.id,
         valor,
         data: new Date().toISOString(),
-      });
+      };
+      await registrarRecarga(recarga);
       setConfirmado(true);
+      try {
+        await enviarRecargaApi(recarga);
+        setEnviadoApi(true);
+      } catch {
+        setEnviadoApi(false);
+      }
     } catch {
       Alert.alert('Não foi possível salvar', 'Tente confirmar novamente. Nenhuma recarga real foi realizada.');
     } finally {
@@ -61,6 +70,7 @@ export default function ConfirmarRecargaScreen() {
           <Text style={styles.description}>Cartão: {cartao.nome}</Text>
           <Text style={styles.description}>Valor: {formatar(valor)}</Text>
           <Text style={styles.notice}>Nenhuma cobrança ou crédito real foi realizado. Esta operação foi salva no histórico deste dispositivo.</Text>
+          <Text style={styles.notice}>{enviadoApi ? 'Registro demonstrativo enviado à API.' : 'Registro salvo somente no celular. A API está indisponível ou não confirmou o envio.'}</Text>
           <TouchableOpacity style={styles.button} onPress={() => router.push('/historico-recargas')}>
             <Text style={styles.buttonText}>Ver histórico de recargas</Text>
           </TouchableOpacity>
@@ -83,7 +93,7 @@ export default function ConfirmarRecargaScreen() {
               <Text style={styles.label}>Valor</Text>
               <Text style={styles.amount}>{formatar(valor)}</Text>
             </View>
-            <Text style={styles.notice}>Demonstração acadêmica: esta confirmação não realiza pagamento, não altera saldo. A operação será registrada apenas neste dispositivo.</Text>
+            <Text style={styles.notice}>Demonstração acadêmica: esta confirmação não realiza pagamento, não altera saldo. A operação será salva neste dispositivo e, se a API estiver disponível, também no servidor de demonstração.</Text>
           </ScrollView>
           <TouchableOpacity style={styles.cancelButton} onPress={() => router.back()}>
             <Text style={styles.cancelText}>Alterar valor</Text>

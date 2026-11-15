@@ -40,5 +40,13 @@
       "nome": "Meus cartões",
       "descricao": "Consulte cartões demonstrativos"
     }
+  ],
+  "recargas": [
+    {
+      "id": "1794717910189-ydq0pbcy",
+      "cartaoId": "digital",
+      "valor": 10,
+      "data": "2026-11-15T04:45:10.189Z"
+    }
   ]
 }
