@@ -1,37 +1,163 @@
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { listarServicosApi, type ServicoApi } from '@/services/api';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-const AZUL = "#087DDD";
-const CINZA = "#777";
+const AZUL = '#087DDD';
+const CINZA = '#777';
 
-const servicos = [
-  { nome: "Perfil", icone: "person-outline", rota: "/perfil" },
-  { nome: "Gerenciar pagamento", icone: "wallet-outline" },
-  { nome: "Cartão Digital", icone: "phone-portrait-outline" },
-  { nome: "Meus Cartões", icone: "card-outline", rota: "/cartoes" },
-  { nome: "Histórico de recargas", icone: "time-outline", rota: "/historico-recargas" },
-  { nome: "Meus pedidos", icone: "receipt-outline" },
-  { nome: "Recarregue seu cartão", icone: "cash-outline", rota: "/recarga" },
-  { nome: "Recarregue automaticamente", icone: "refresh-outline" },
-  { nome: "Onde validar", icone: "location-outline" },
-  { nome: "Perguntas frequentes (FAQ)", icone: "help-circle-outline" },
-  { nome: "Onde estamos", icone: "map-outline" },
-  { nome: "Clube Riocard Mais", icone: "star-outline" },
-  { nome: "Código de autorização", icone: "key-outline" },
-  { nome: "Fiscalização", icone: "shield-checkmark-outline" },
-  { nome: "Central de notificações", icone: "notifications-outline" },
-  { nome: "Avaliar o aplicativo", icone: "thumbs-up-outline" },
+const SERVICOS_API_FALLBACK: ServicoApi[] = [
+  {
+    id: 'recarga',
+    nome: 'Recarga simulada',
+    descricao: 'Simule uma recarga sem cobrança real',
+  },
+  {
+    id: 'historico',
+    nome: 'Histórico de recargas',
+    descricao: 'Consulte operações salvas localmente no aparelho',
+  },
+  {
+    id: 'cartoes',
+    nome: 'Meus cartões',
+    descricao: 'Consulte cartões demonstrativos',
+  },
+];
+
+const ROTAS_POR_ID: Record<string, string> = {
+  recarga: '/recarga',
+  historico: '/historico-recargas',
+  cartoes: '/cartoes',
+  perfil: '/perfil',
+};
+
+const ICONES_POR_ID: Record<string, string> = {
+  recarga: 'cash-outline',
+  historico: 'time-outline',
+  cartoes: 'card-outline',
+  perfil: 'person-outline',
+};
+
+const servicosMenu = [
+  { nome: 'Perfil', icone: 'person-outline', rota: '/perfil' },
+  {
+    nome: 'Gerenciar pagamento',
+    icone: 'wallet-outline',
+    info: 'Função demonstrativa: nenhuma forma de pagamento real é cadastrada neste projeto.',
+  },
+  { nome: 'Cartão Digital', icone: 'phone-portrait-outline', rota: '/cartao/digital' },
+  { nome: 'Meus Cartões', icone: 'card-outline', rota: '/cartoes' },
+  { nome: 'Histórico de recargas', icone: 'time-outline', rota: '/historico-recargas' },
+  {
+    nome: 'Meus pedidos',
+    icone: 'receipt-outline',
+    info: 'Consulte suas recargas simuladas na opção Histórico de recargas.',
+  },
+  { nome: 'Recarregue seu cartão', icone: 'cash-outline', rota: '/recarga' },
+  {
+    nome: 'Recarregue automaticamente',
+    icone: 'refresh-outline',
+    info: 'Função demonstrativa: recarga automática indisponível no modo acadêmico.',
+  },
+  {
+    nome: 'Onde validar',
+    icone: 'location-outline',
+    info: 'A validação ocorre nos validadores de ônibus, trens, metrô, barcas e VLT.',
+  },
+  {
+    nome: 'Perguntas frequentes (FAQ)',
+    icone: 'help-circle-outline',
+    info: 'Este aplicativo é um protótipo acadêmico. Saldos e recargas são apenas simulações.',
+  },
+  {
+    nome: 'Onde estamos',
+    icone: 'map-outline',
+    info: 'Lojas e terminais de atendimento Riocard Mais no Estado do Rio de Janeiro.',
+  },
+  {
+    nome: 'Clube Riocard Mais',
+    icone: 'star-outline',
+    info: 'Programa de vantagens demonstrativo.',
+  },
+  {
+    nome: 'Código de autorização',
+    icone: 'key-outline',
+    info: 'Nenhuma autorização pendente para os cartões demonstrativos.',
+  },
+  {
+    nome: 'Fiscalização',
+    icone: 'shield-checkmark-outline',
+    info: 'Canal informativo de uso regular dos cartões de transporte.',
+  },
+  {
+    nome: 'Central de notificações',
+    icone: 'notifications-outline',
+    info: 'Você não possui novas notificações no momento.',
+  },
+  {
+    nome: 'Avaliar o aplicativo',
+    icone: 'thumbs-up-outline',
+    info: 'Obrigado por testar o protótipo da disciplina de Desenvolvimento de Aplicativos Híbridos!',
+  },
 ];
 
 export default function ServicosScreen() {
+  const [servicosApi, setServicosApi] = useState<ServicoApi[]>(SERVICOS_API_FALLBACK);
+  const [carregando, setCarregando] = useState(true);
+  const [modoDemonstrativo, setModoDemonstrativo] = useState(false);
+
+  useEffect(() => {
+    let ativo = true;
+
+    async function carregarServicos() {
+      try {
+        const lista = await listarServicosApi();
+        if (!ativo) return;
+        if (Array.isArray(lista) && lista.length > 0) {
+          setServicosApi(lista);
+          setModoDemonstrativo(false);
+        } else {
+          setServicosApi(SERVICOS_API_FALLBACK);
+          setModoDemonstrativo(true);
+        }
+      } catch {
+        if (!ativo) return;
+        setServicosApi(SERVICOS_API_FALLBACK);
+        setModoDemonstrativo(true);
+      } finally {
+        if (ativo) setCarregando(false);
+      }
+    }
+
+    carregarServicos();
+    return () => {
+      ativo = false;
+    };
+  }, []);
+
+  function abrirServicoApi(servico: ServicoApi) {
+    const chave = String(servico.id);
+    const rota = ROTAS_POR_ID[chave];
+    if (rota) {
+      router.push(rota as any);
+      return;
+    }
+    Alert.alert(
+      String(servico.nome ?? 'Serviço'),
+      String(servico.descricao ?? 'Serviço demonstrativo.')
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
@@ -54,13 +180,55 @@ export default function ServicosScreen() {
       >
         <Text style={styles.title}>Serviços</Text>
 
-        {servicos.map((item, index) => (
+        <View style={styles.destaqueBox}>
+          <View style={styles.destaqueHeader}>
+            <Text style={styles.destaqueTitulo}>Serviços em destaque</Text>
+            <Text style={styles.destaqueBadge}>
+              {modoDemonstrativo ? 'Local' : 'API'}
+            </Text>
+          </View>
+
+          {carregando ? (
+            <ActivityIndicator color={AZUL} style={{ marginVertical: 12 }} />
+          ) : (
+            servicosApi.map((item) => {
+              const idStr = String(item.id);
+              const icone = ICONES_POR_ID[idStr] ?? 'apps-outline';
+              return (
+                <TouchableOpacity
+                  key={idStr}
+                  style={styles.destaqueItem}
+                  onPress={() => abrirServicoApi(item)}
+                >
+                  <Ionicons name={icone as any} size={24} color={AZUL} />
+                  <View style={styles.destaqueTextoBox}>
+                    <Text style={styles.destaqueNome}>
+                      {String(item.nome ?? 'Serviço')}
+                    </Text>
+                    {item.descricao ? (
+                      <Text style={styles.destaqueDescricao}>
+                        {String(item.descricao)}
+                      </Text>
+                    ) : null}
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color="#999" />
+                </TouchableOpacity>
+              );
+            })
+          )}
+        </View>
+
+        <Text style={styles.subtitulo}>Todos os serviços</Text>
+
+        {servicosMenu.map((item, index) => (
           <TouchableOpacity
             key={index}
             style={styles.serviceRow}
             onPress={() => {
               if (item.rota) {
                 router.push(item.rota as any);
+              } else if (item.info) {
+                Alert.alert(item.nome, item.info);
               }
             }}
           >
@@ -76,7 +244,15 @@ export default function ServicosScreen() {
           <Text style={styles.version}>Versão 2.68.7-P</Text>
           <Text style={styles.versionInfo}>Aplicativo Riocard Mais</Text>
 
-          <TouchableOpacity style={styles.report}>
+          <TouchableOpacity
+            style={styles.report}
+            onPress={() =>
+              Alert.alert(
+                'Disque denúncia',
+                'Canal demonstrativo para registro de irregularidades no transporte.'
+              )
+            }
+          >
             <MaterialCommunityIcons
               name="phone-alert-outline"
               size={25}
@@ -85,7 +261,10 @@ export default function ServicosScreen() {
             <Text style={styles.reportText}>Disque denúncia</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.logout}>
+          <TouchableOpacity
+            style={styles.logout}
+            onPress={() => router.replace('/')}
+          >
             <Ionicons name="log-out-outline" size={25} color="#d33" />
             <Text style={styles.logoutText}>Sair do app</Text>
           </TouchableOpacity>
@@ -96,18 +275,18 @@ export default function ServicosScreen() {
         <NavItem
           icon="home-outline"
           label="Início"
-          onPress={() => router.replace("/")}
+          onPress={() => router.replace('/')}
         />
 
         <NavItem
           icon="card-outline"
-          label={"Meus\ncartões"}
-          onPress={() => router.push("/cartoes")}
+          label={'Meus\ncartões'}
+          onPress={() => router.push('/cartoes')}
         />
 
         <TouchableOpacity
           style={styles.rechargeNav}
-          onPress={() => router.push("/recarga")}
+          onPress={() => router.push('/recarga')}
         >
           <View style={styles.rechargeCircle}>
             <MaterialCommunityIcons name="cash-plus" size={28} color="#fff" />
@@ -115,7 +294,13 @@ export default function ServicosScreen() {
           <Text style={styles.navText}>Recarga</Text>
         </TouchableOpacity>
 
-        <NavItem icon="star-outline" label="Clube" />
+        <NavItem
+          icon="star-outline"
+          label="Clube"
+          onPress={() =>
+            Alert.alert('Clube Riocard Mais', 'Área de vantagens demonstrativa.')
+          }
+        />
 
         <NavItem icon="menu" label="Serviços" active />
       </View>
@@ -145,33 +330,33 @@ function NavItem({
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#f9faf7",
+    backgroundColor: '#f9faf7',
   },
 
   header: {
     height: 125,
     backgroundColor: AZUL,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 20,
   },
 
   logo: {
-    alignItems: "center",
+    alignItems: 'center',
   },
 
   logoRio: {
-    color: "#fff",
+    color: '#fff',
     fontSize: 28,
-    fontWeight: "bold",
+    fontWeight: 'bold',
     lineHeight: 29,
   },
 
   logoMais: {
-    color: "#fff",
+    color: '#fff',
     fontSize: 27,
-    fontWeight: "bold",
+    fontWeight: 'bold',
     lineHeight: 28,
   },
 
@@ -188,23 +373,88 @@ const styles = StyleSheet.create({
   title: {
     color: AZUL,
     fontSize: 27,
-    fontWeight: "bold",
+    fontWeight: 'bold',
     marginBottom: 15,
+  },
+
+  destaqueBox: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#e2e6ea',
+  },
+
+  destaqueHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+
+  destaqueTitulo: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#222',
+  },
+
+  destaqueBadge: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: AZUL,
+    backgroundColor: '#e6f2fc',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+
+  destaqueItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+  },
+
+  destaqueTextoBox: {
+    flex: 1,
+    marginLeft: 12,
+    marginRight: 8,
+  },
+
+  destaqueNome: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#222',
+  },
+
+  destaqueDescricao: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 2,
+  },
+
+  subtitulo: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#555',
+    marginBottom: 6,
   },
 
   serviceRow: {
     minHeight: 61,
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: "#ddd",
+    borderBottomColor: '#ddd',
   },
 
   serviceText: {
     flex: 1,
     marginLeft: 15,
     fontSize: 16,
-    color: "#333",
+    color: '#333',
   },
 
   extraArea: {
@@ -212,8 +462,8 @@ const styles = StyleSheet.create({
   },
 
   version: {
-    textAlign: "center",
-    color: "#888",
+    textAlign: 'center',
+    color: '#888',
     marginBottom: 20,
   },
 
@@ -226,63 +476,63 @@ const styles = StyleSheet.create({
   },
 
   report: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingVertical: 15,
   },
 
   reportText: {
-    color: "#333",
+    color: '#333',
     fontSize: 16,
     marginLeft: 15,
   },
 
   logout: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingVertical: 15,
   },
 
   logoutText: {
-    color: "#d33",
+    color: '#d33',
     fontSize: 16,
     marginLeft: 15,
   },
 
   bottomNav: {
     height: 82,
-    flexDirection: "row",
-    backgroundColor: "#fafbf8",
+    flexDirection: 'row',
+    backgroundColor: '#fafbf8',
     borderTopWidth: 1,
-    borderTopColor: "#ddd",
+    borderTopColor: '#ddd',
   },
 
   navItem: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
   rechargeNav: {
     flex: 1.1,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
   rechargeCircle: {
     width: 49,
     height: 49,
     borderRadius: 25,
-    backgroundColor: "#aaa",
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: '#aaa',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginTop: -19,
   },
 
   navText: {
     color: CINZA,
     fontSize: 11,
-    textAlign: "center",
+    textAlign: 'center',
     marginTop: 3,
   },
 
