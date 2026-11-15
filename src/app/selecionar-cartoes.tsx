@@ -117,7 +117,10 @@ export default function SelecionarCartoesScreen() {
         </TouchableOpacity>
       </ScrollView>
 
-      <TouchableOpacity style={styles.continueButton}>
+      <TouchableOpacity
+        style={styles.continueButton}
+        onPress={() => router.push({ pathname: "/valor-recarga", params: { cartaoId: CARTOES_DEMO[selecionado].id } })}
+      >
         <Text style={styles.continueText}>Continuar</Text>
       </TouchableOpacity>
     </SafeAreaView>
