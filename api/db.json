@@ -1,0 +1,44 @@
+{
+  "cartoes": [
+    {
+      "id": "digital",
+      "nome": "Cartão Digital",
+      "numero": "01.07.03372871-7",
+      "cor": "#148bd2",
+      "buiHabilitado": false,
+      "saldoDemonstrativo": 42.5
+    },
+    {
+      "id": "pessoal",
+      "nome": "Eu",
+      "numero": "01.09.14194806-1",
+      "cor": "#e52a91",
+      "buiHabilitado": true,
+      "saldoDemonstrativo": 18.75
+    }
+  ],
+  "usuarios": [
+    {
+      "id": "demo",
+      "nome": "Usuário de Demonstração",
+      "email": "demo@example.com"
+    }
+  ],
+  "servicos": [
+    {
+      "id": "recarga",
+      "nome": "Recarga simulada",
+      "descricao": "Simule uma recarga sem cobrança real"
+    },
+    {
+      "id": "historico",
+      "nome": "Histórico de recargas",
+      "descricao": "Consulte operações salvas localmente no aparelho"
+    },
+    {
+      "id": "cartoes",
+      "nome": "Meus cartões",
+      "descricao": "Consulte cartões demonstrativos"
+    }
+  ]
+}

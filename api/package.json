@@ -1,0 +1,12 @@
+{
+  "name": "p2-api-simulada",
+  "version": "1.0.0",
+  "private": true,
+  "description": "API de demonstracao academica para o aplicativo P2 Expo",
+  "scripts": {
+    "start": "json-server db.json --host 0.0.0.0 --port 3001"
+  },
+  "devDependencies": {
+    "json-server": "1.0.0-beta.3"
+  }
+}
