@@ -74,3 +74,7 @@ export async function enviarRecargaApi(recarga: {
     clearTimeout(limite);
   }
 }
+
+/** Consulta os registros fictícios já recebidos pelo servidor. */
+export type RecargaApi = { id: string; cartaoId: string; valor: number; data: string };
+export const listarRecargasApi = () => consultar<RecargaApi[]>('/recargas');

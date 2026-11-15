@@ -1,6 +1,6 @@
 import { AppColors } from '@/constants/theme';
 import { CARTOES_DEMO } from '@/data/cartoes';
-import { listarRecargas, type RecargaSimulada } from '@/services/historico-recargas';
+import { listarRecargas, sincronizarRecargasEmSegundoPlano, type RecargaSimulada } from '@/services/historico-recargas';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
@@ -32,6 +32,7 @@ export default function HistoricoRecargasScreen() {
   useFocusEffect(useCallback(() => {
     setFiltro(filtroInicial);
     void atualizar();
+    void sincronizarRecargasEmSegundoPlano();
   }, [atualizar, filtroInicial]));
 
   const registros = historico.filter((item) => filtro === 'todos' || item.cartaoId === filtro);

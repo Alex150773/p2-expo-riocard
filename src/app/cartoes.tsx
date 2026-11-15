@@ -14,7 +14,7 @@ const AZUL = '#087DDD';
 const CINZA = '#777';
 
 export default function CartoesScreen() {
-  const { cartoes, origem, carregando, erro, atualizar } = useCartoes();
+  const { cartoes } = useCartoes();
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
@@ -44,14 +44,6 @@ export default function CartoesScreen() {
           <Text style={{ color: AZUL, fontWeight: '700' }}>Ver histórico de recargas</Text>
         </TouchableOpacity>
 
-        <Text style={{ color: '#666', marginBottom: 12 }}>
-          {carregando ? 'Consultando API...' : origem === 'api' ? 'Cartões carregados da API' : 'Modo demonstrativo: dados locais'}
-        </Text>
-        {erro ? (
-          <TouchableOpacity onPress={() => { void atualizar(); }} accessibilityRole="button" style={{ paddingVertical: 10, marginBottom: 10 }}>
-            <Text style={{ color: AZUL }}>API indisponível. Toque para tentar novamente.</Text>
-          </TouchableOpacity>
-        ) : null}
         {cartoes.length === 0 ? <Text>Nenhum cartão cadastrado.</Text> : null}
         {cartoes.map((cartao) => (
           <TouchableOpacity
