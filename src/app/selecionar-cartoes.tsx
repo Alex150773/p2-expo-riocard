@@ -1,3 +1,4 @@
+import { CARTOES_DEMO } from '@/data/cartoes';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useState } from 'react';
@@ -48,7 +49,7 @@ export default function SelecionarCartoesScreen() {
           ]}
           onPress={() => setSelecionado(0)}
         >
-          <View style={styles.cardImage}>
+          <View style={[styles.cardImage, { backgroundColor: CARTOES_DEMO[0].cor }]}>
             <MaterialCommunityIcons
               name="credit-card-outline"
               size={31}
@@ -57,8 +58,8 @@ export default function SelecionarCartoesScreen() {
           </View>
 
           <View style={styles.cardInfo}>
-            <Text style={styles.cardName}>Cartão Digital</Text>
-            <Text style={styles.cardNumber}>01.07.03372871-7</Text>
+            <Text style={styles.cardName}>{CARTOES_DEMO[0].nome}</Text>
+            <Text style={styles.cardNumber}>{CARTOES_DEMO[0].numero}</Text>
           </View>
 
           <Ionicons
@@ -79,7 +80,7 @@ export default function SelecionarCartoesScreen() {
           ]}
           onPress={() => setSelecionado(1)}
         >
-          <View style={[styles.cardImage, styles.cardPink]}>
+          <View style={[styles.cardImage, { backgroundColor: CARTOES_DEMO[1].cor }]}>
             <MaterialCommunityIcons
               name="credit-card-outline"
               size={31}
@@ -88,8 +89,8 @@ export default function SelecionarCartoesScreen() {
           </View>
 
           <View style={styles.cardInfo}>
-            <Text style={styles.cardName}>Eu</Text>
-            <Text style={styles.cardNumber}>01.09.14194806-1</Text>
+            <Text style={styles.cardName}>{CARTOES_DEMO[1].nome}</Text>
+            <Text style={styles.cardNumber}>{CARTOES_DEMO[1].numero}</Text>
           </View>
 
           <Ionicons

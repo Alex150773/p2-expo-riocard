@@ -1,3 +1,4 @@
+import { CARTOES_DEMO } from '@/data/cartoes';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -36,7 +37,7 @@ export default function CartoesScreen() {
         <Text style={styles.title}>Meus cartões</Text>
 
         <View style={styles.card}>
-          <View style={[styles.cardImage, { backgroundColor: '#148bd2' }]}>
+          <View style={[styles.cardImage, { backgroundColor: CARTOES_DEMO[0].cor }]}>
             <MaterialCommunityIcons
               name="credit-card-outline"
               size={30}
@@ -45,13 +46,13 @@ export default function CartoesScreen() {
           </View>
 
           <View style={styles.cardInfo}>
-            <Text style={styles.cardName}>Cartão Digital</Text>
-            <Text style={styles.cardNumber}>01.07.03372871-7</Text>
+            <Text style={styles.cardName}>{CARTOES_DEMO[0].nome}</Text>
+            <Text style={styles.cardNumber}>{CARTOES_DEMO[0].numero}</Text>
           </View>
         </View>
 
         <View style={styles.card}>
-          <View style={[styles.cardImage, { backgroundColor: '#e52a91' }]}>
+          <View style={[styles.cardImage, { backgroundColor: CARTOES_DEMO[1].cor }]}>
             <MaterialCommunityIcons
               name="credit-card-outline"
               size={30}
@@ -60,8 +61,8 @@ export default function CartoesScreen() {
           </View>
 
           <View style={styles.cardInfo}>
-            <Text style={styles.cardName}>Eu</Text>
-            <Text style={styles.cardNumber}>01.09.14194806-1</Text>
+            <Text style={styles.cardName}>{CARTOES_DEMO[1].nome}</Text>
+            <Text style={styles.cardNumber}>{CARTOES_DEMO[1].numero}</Text>
           </View>
 
           <View style={styles.status}>
