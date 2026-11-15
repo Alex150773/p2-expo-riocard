@@ -2,6 +2,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { AppColors } from '@/constants/theme';
 import { CARTOES_DEMO } from '@/data/cartoes';
+import { useCartoes } from '@/hooks/use-cartoes';
 import { useState } from 'react';
 import {
   ScrollView,
@@ -17,9 +18,11 @@ const AZUL_ESCURO = AppColors.azulEscuro;
 const CINZA = AppColors.cinza;
 
 export default function HomeScreen() {
+  const { cartoes, origem } = useCartoes();
+  const cartoesExibidos = cartoes.length ? cartoes : [...CARTOES_DEMO];
   const [cartaoId, setCartaoId] = useState(CARTOES_DEMO[0].id);
   const [saldoVisivel, setSaldoVisivel] = useState(false);
-  const cartaoSelecionado = CARTOES_DEMO.find((cartao) => cartao.id === cartaoId) ?? CARTOES_DEMO[0];
+  const cartaoSelecionado = cartoesExibidos.find((cartao) => cartao.id === cartaoId) ?? cartoesExibidos[0];
   const saldo = cartaoSelecionado.saldoDemonstrativo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
   return (
@@ -54,7 +57,7 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.cardSelector}>
-            {CARTOES_DEMO.map((cartao) => (
+            {cartoesExibidos.map((cartao) => (
               <TouchableOpacity
                 key={cartao.id}
                 accessibilityRole="button"
@@ -77,7 +80,7 @@ export default function HomeScreen() {
               <Ionicons name={saldoVisivel ? 'eye-outline' : 'eye-off-outline'} size={28} color="#fff" />
             </TouchableOpacity>
           </View>
-          <Text style={styles.demoNotice}>Saldo fictício para demonstração</Text>
+          <Text style={styles.demoNotice}>{origem === "api" ? "Saldo da API simulada" : "Saldo fictício para demonstração"}</Text>
 
           <View style={styles.paymentRow}>
             <View style={styles.paymentOption}>

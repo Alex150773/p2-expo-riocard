@@ -1,4 +1,4 @@
-import { CARTOES_DEMO } from '@/data/cartoes';
+import { useCartoes } from '@/hooks/use-cartoes';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,6 +14,7 @@ const AZUL = '#087DDD';
 const CINZA = '#777';
 
 export default function CartoesScreen() {
+  const { cartoes, origem, carregando, erro, atualizar } = useCartoes();
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
@@ -43,51 +44,36 @@ export default function CartoesScreen() {
           <Text style={{ color: AZUL, fontWeight: '700' }}>Ver histórico de recargas</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.card}
-          activeOpacity={0.8}
-          accessibilityRole="button"
-          accessibilityLabel={`Ver detalhes do cartão ${CARTOES_DEMO[0].nome}`}
-          onPress={() => router.push({ pathname: "/cartao/[id]", params: { id: CARTOES_DEMO[0].id } })}
-        >
-          <View style={[styles.cardImage, { backgroundColor: CARTOES_DEMO[0].cor }]}>
-            <MaterialCommunityIcons
-              name="credit-card-outline"
-              size={30}
-              color="#fff"
-            />
-          </View>
-
-          <View style={styles.cardInfo}>
-            <Text style={styles.cardName}>{CARTOES_DEMO[0].nome}</Text>
-            <Text style={styles.cardNumber}>{CARTOES_DEMO[0].numero}</Text>
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.card}
-          activeOpacity={0.8}
-          accessibilityRole="button"
-          accessibilityLabel={`Ver detalhes do cartão ${CARTOES_DEMO[1].nome}`}
-          onPress={() => router.push({ pathname: "/cartao/[id]", params: { id: CARTOES_DEMO[1].id } })}
-        >
-          <View style={[styles.cardImage, { backgroundColor: CARTOES_DEMO[1].cor }]}>
-            <MaterialCommunityIcons
-              name="credit-card-outline"
-              size={30}
-              color="#fff"
-            />
-          </View>
-
-          <View style={styles.cardInfo}>
-            <Text style={styles.cardName}>{CARTOES_DEMO[1].nome}</Text>
-            <Text style={styles.cardNumber}>{CARTOES_DEMO[1].numero}</Text>
-          </View>
-
-          <View style={styles.status}>
-            <Text style={styles.statusText}>BUI habilitado ✓</Text>
-          </View>
-        </TouchableOpacity>
+        <Text style={{ color: '#666', marginBottom: 12 }}>
+          {carregando ? 'Consultando API...' : origem === 'api' ? 'Cartões carregados da API' : 'Modo demonstrativo: dados locais'}
+        </Text>
+        {erro ? (
+          <TouchableOpacity onPress={() => { void atualizar(); }} accessibilityRole="button" style={{ paddingVertical: 10, marginBottom: 10 }}>
+            <Text style={{ color: AZUL }}>API indisponível. Toque para tentar novamente.</Text>
+          </TouchableOpacity>
+        ) : null}
+        {cartoes.length === 0 ? <Text>Nenhum cartão cadastrado.</Text> : null}
+        {cartoes.map((cartao) => (
+          <TouchableOpacity
+            key={cartao.id}
+            style={styles.card}
+            activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel={`Ver detalhes do cartão ${cartao.nome}`}
+            onPress={() => router.push({ pathname: '/cartao/[id]', params: { id: cartao.id } })}
+          >
+            <View style={[styles.cardImage, { backgroundColor: cartao.cor }]}>
+              <MaterialCommunityIcons name="credit-card-outline" size={30} color="#fff" />
+            </View>
+            <View style={styles.cardInfo}>
+              <Text style={styles.cardName}>{cartao.nome}</Text>
+              <Text style={styles.cardNumber}>{cartao.numero}</Text>
+            </View>
+            {cartao.buiHabilitado ? (
+              <View style={styles.status}><Text style={styles.statusText}>BUI habilitado ✓</Text></View>
+            ) : null}
+          </TouchableOpacity>
+        ))}
       </ScrollView>
 
       <TouchableOpacity style={styles.addButton}>

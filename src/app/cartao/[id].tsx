@@ -1,6 +1,6 @@
 import { AppColors } from '@/constants/theme';
 import { useState } from 'react';
-import { CARTOES_DEMO } from '@/data/cartoes';
+import { useCartoes } from '@/hooks/use-cartoes';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -8,7 +8,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function DetalhesCartaoScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const cartao = CARTOES_DEMO.find((item) => item.id === id);
+  const { cartoes, origem, carregando } = useCartoes();
+  const cartao = cartoes.find((item) => item.id === id);
   const [saldoVisivel, setSaldoVisivel] = useState(false);
 
   return (
@@ -22,8 +23,9 @@ export default function DetalhesCartaoScreen() {
       </View>
 
       {!cartao ? (
+
         <View style={styles.empty}>
-          <Text style={styles.title}>Cartão não encontrado</Text>
+          <Text style={styles.title}>{carregando ? "Carregando cartão..." : "Cartão não encontrado"}</Text>
           <Text style={styles.secondary}>O cartão selecionado não está disponível.</Text>
           <TouchableOpacity style={styles.button} onPress={() => router.replace('/cartoes')}>
             <Text style={styles.buttonText}>Voltar aos meus cartões</Text>
@@ -62,7 +64,7 @@ export default function DetalhesCartaoScreen() {
             </Text>
           </View>
 
-          <Text style={styles.notice}>Dados fictícios utilizados apenas para demonstração acadêmica.</Text>
+          <Text style={styles.notice}>{origem === "api" ? "Dados obtidos da API simulada para demonstração acadêmica." : "Modo demonstrativo: dados fictícios locais."}</Text>
           <TouchableOpacity style={styles.button} onPress={() => router.push('/recarga')}>
             <MaterialCommunityIcons name="cash-plus" size={22} color="#fff" />
             <Text style={styles.buttonText}>Ir para recarga</Text>
