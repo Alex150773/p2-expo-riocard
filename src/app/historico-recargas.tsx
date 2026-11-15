@@ -3,6 +3,7 @@ import { CARTOES_DEMO } from '@/data/cartoes';
 import { listarRecargasApi } from '@/services/api';
 import {
   listarRecargas,
+  sincronizarRecargas,
   sincronizarRecargasEmSegundoPlano,
   type RecargaSimulada,
 } from '@/services/historico-recargas';
@@ -11,6 +12,7 @@ import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -31,8 +33,20 @@ export default function HistoricoRecargasScreen() {
   const [idsSincronizados, setIdsSincronizados] = useState<Set<string>>(new Set());
   const [apiDisponivel, setApiDisponivel] = useState(false);
   const [carregando, setCarregando] = useState(true);
+  const [sincronizandoManual, setSincronizandoManual] = useState(false);
   const [erro, setErro] = useState(false);
   const [filtro, setFiltro] = useState(filtroInicial);
+
+  const consultarStatusRemoto = useCallback(async () => {
+    try {
+      const remotas = await listarRecargasApi();
+      setIdsSincronizados(new Set(remotas.map((item) => item.id)));
+      setApiDisponivel(true);
+    } catch {
+      setIdsSincronizados(new Set());
+      setApiDisponivel(false);
+    }
+  }, []);
 
   const atualizar = useCallback(async () => {
     setCarregando(true);
@@ -41,21 +55,13 @@ export default function HistoricoRecargasScreen() {
       await sincronizarRecargasEmSegundoPlano();
       const locais = await listarRecargas();
       setHistorico(locais);
-
-      try {
-        const remotas = await listarRecargasApi();
-        setIdsSincronizados(new Set(remotas.map((item) => item.id)));
-        setApiDisponivel(true);
-      } catch {
-        setIdsSincronizados(new Set());
-        setApiDisponivel(false);
-      }
+      await consultarStatusRemoto();
     } catch {
       setErro(true);
     } finally {
       setCarregando(false);
     }
-  }, []);
+  }, [consultarStatusRemoto]);
 
   useFocusEffect(
     useCallback(() => {
@@ -64,10 +70,43 @@ export default function HistoricoRecargasScreen() {
     }, [atualizar, filtroInicial])
   );
 
+  async function forcarSincronizacao() {
+    setSincronizandoManual(true);
+    try {
+      const resultado = await sincronizarRecargas();
+      const locais = await listarRecargas();
+      setHistorico(locais);
+      await consultarStatusRemoto();
+
+      if (resultado.enviadas > 0) {
+        Alert.alert(
+          'Sincronização concluída',
+          `${resultado.enviadas} recarga(s) pendente(s) enviada(s) para a API.`
+        );
+      } else {
+        Alert.alert(
+          'Tudo atualizado',
+          'Todas as recargas locais já estão sincronizadas com a API.'
+        );
+      }
+    } catch {
+      setApiDisponivel(false);
+      Alert.alert(
+        'API indisponível',
+        'Não foi possível conectar ao servidor na porta 3001. As recargas permanecem salvas no aparelho.'
+      );
+    } finally {
+      setSincronizandoManual(false);
+    }
+  }
+
   const registros = historico.filter(
     (item) => filtro === 'todos' || item.cartaoId === filtro
   );
   const totalSimulado = registros.reduce((soma, item) => soma + item.valor, 0);
+  const pendentes = registros.filter(
+    (item) => !apiDisponivel || !idsSincronizados.has(item.id)
+  ).length;
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -76,7 +115,17 @@ export default function HistoricoRecargasScreen() {
           <Ionicons name="arrow-back" size={28} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Histórico de recargas</Text>
-        <View style={{ width: 28 }} />
+        <TouchableOpacity
+          accessibilityLabel="Sincronizar recargas"
+          onPress={() => void forcarSincronizacao()}
+          disabled={sincronizandoManual || carregando}
+        >
+          {sincronizandoManual ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Ionicons name="sync-outline" size={25} color="#fff" />
+          )}
+        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
@@ -105,11 +154,23 @@ export default function HistoricoRecargasScreen() {
 
         {!carregando && !erro && registros.length > 0 ? (
           <View style={styles.summaryCard}>
-            <View>
-              <Text style={styles.summaryLabel}>Total simulado ({registros.length})</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.summaryLabel}>
+                Total simulado ({registros.length})
+              </Text>
               <Text style={styles.summaryValue}>{moeda(totalSimulado)}</Text>
+              {pendentes > 0 ? (
+                <Text style={styles.pendingHint}>
+                  {pendentes} registro(s) aguardando sincronização
+                </Text>
+              ) : null}
             </View>
-            <View style={styles.apiStatusBadge}>
+
+            <TouchableOpacity
+              style={styles.apiStatusBadge}
+              onPress={() => void forcarSincronizacao()}
+              disabled={sincronizandoManual}
+            >
               <Ionicons
                 name={apiDisponivel ? 'cloud-done-outline' : 'cloud-offline-outline'}
                 size={16}
@@ -121,9 +182,9 @@ export default function HistoricoRecargasScreen() {
                   { color: apiDisponivel ? '#278020' : '#777' },
                 ]}
               >
-                {apiDisponivel ? 'API conectada' : 'Modo local'}
+                {apiDisponivel ? 'API conectada' : 'Sincronizar'}
               </Text>
-            </View>
+            </TouchableOpacity>
           </View>
         ) : null}
 
@@ -219,6 +280,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 10,
   },
   summaryLabel: { fontSize: 13, color: '#666' },
   summaryValue: {
@@ -227,13 +289,19 @@ const styles = StyleSheet.create({
     color: AppColors.azul,
     marginTop: 4,
   },
+  pendingHint: {
+    fontSize: 12,
+    color: '#b25e09',
+    marginTop: 4,
+    fontWeight: '500',
+  },
   apiStatusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
     backgroundColor: '#f3f6f9',
     paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingVertical: 8,
     borderRadius: 14,
   },
   apiStatusText: { fontSize: 12, fontWeight: '600' },
