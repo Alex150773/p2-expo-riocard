@@ -1,5 +1,6 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { AppColors } from '@/constants/theme';
 import {
   ScrollView,
   StyleSheet,
@@ -9,9 +10,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const AZUL = '#087DDD';
-const AZUL_ESCURO = '#0064A9';
-const CINZA = '#777';
+const AZUL = AppColors.azul;
+const AZUL_ESCURO = AppColors.azulEscuro;
+const CINZA = AppColors.cinza;
 
 export default function HomeScreen() {
   return (
