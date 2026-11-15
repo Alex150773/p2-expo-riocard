@@ -36,7 +36,7 @@ export default function HomeScreen() {
           <View style={styles.cardTop}>
             <Text style={styles.cardTitle}>Cartão Digital</Text>
 
-            <TouchableOpacity style={styles.rechargeMini}>
+            <TouchableOpacity style={styles.rechargeMini} accessibilityRole="button" onPress={() => router.push('/recarga')}>
               <MaterialCommunityIcons
                 name="cash-plus"
                 size={21}

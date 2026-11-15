@@ -2,7 +2,7 @@ import { AppColors } from '@/constants/theme';
 import { CARTOES_DEMO } from '@/data/cartoes';
 import { listarRecargas, type RecargaSimulada } from '@/services/historico-recargas';
 import { Ionicons } from '@expo/vector-icons';
-import { router, useFocusEffect } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -10,10 +10,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 const moeda = (valor: number) => valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
 export default function HistoricoRecargasScreen() {
+  const { cartaoId } = useLocalSearchParams<{ cartaoId?: string }>();
+  const filtroInicial = CARTOES_DEMO.some((cartao) => cartao.id === cartaoId) ? cartaoId! : 'todos';
   const [historico, setHistorico] = useState<RecargaSimulada[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState(false);
-  const [filtro, setFiltro] = useState('todos');
+  const [filtro, setFiltro] = useState(filtroInicial);
 
   const atualizar = useCallback(async () => {
     setCarregando(true);
@@ -27,7 +29,10 @@ export default function HistoricoRecargasScreen() {
     }
   }, []);
 
-  useFocusEffect(useCallback(() => { void atualizar(); }, [atualizar]));
+  useFocusEffect(useCallback(() => {
+    setFiltro(filtroInicial);
+    void atualizar();
+  }, [atualizar, filtroInicial]));
 
   const registros = historico.filter((item) => filtro === 'todos' || item.cartaoId === filtro);
 

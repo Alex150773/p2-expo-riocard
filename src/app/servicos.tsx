@@ -17,6 +17,7 @@ const servicos = [
   { nome: "Gerenciar pagamento", icone: "wallet-outline" },
   { nome: "Cartão Digital", icone: "phone-portrait-outline" },
   { nome: "Meus Cartões", icone: "card-outline", rota: "/cartoes" },
+  { nome: "Histórico de recargas", icone: "time-outline", rota: "/historico-recargas" },
   { nome: "Meus pedidos", icone: "receipt-outline" },
   { nome: "Recarregue seu cartão", icone: "cash-outline", rota: "/recarga" },
   { nome: "Recarregue automaticamente", icone: "refresh-outline" },

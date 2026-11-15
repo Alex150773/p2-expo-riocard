@@ -54,6 +54,14 @@ export default function DetalhesCartaoScreen() {
             <MaterialCommunityIcons name="cash-plus" size={22} color="#fff" />
             <Text style={styles.buttonText}>Ir para recarga</Text>
           </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.button, styles.historyButton]}
+            accessibilityRole="button"
+            onPress={() => router.push({ pathname: '/historico-recargas', params: { cartaoId: cartao.id } })}
+          >
+            <Ionicons name="time-outline" size={22} color={AppColors.azul} />
+            <Text style={[styles.buttonText, styles.historyButtonText]}>Histórico deste cartão</Text>
+          </TouchableOpacity>
         </ScrollView>
       )}
     </SafeAreaView>
@@ -76,6 +84,8 @@ const styles = StyleSheet.create({
   notice: { color: '#666', fontSize: 13, marginVertical: 22, lineHeight: 19 },
   button: { minHeight: 54, backgroundColor: AppColors.azul, borderRadius: 9, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10, paddingHorizontal: 15 },
   buttonText: { color: '#fff', fontSize: 17, fontWeight: '600' },
+  historyButton: { backgroundColor: '#fff', borderWidth: 1, borderColor: AppColors.azul, marginTop: 12 },
+  historyButtonText: { color: AppColors.azul },
   empty: { flex: 1, padding: 24, justifyContent: 'center' },
   secondary: { color: '#666', marginBottom: 24 },
 });
