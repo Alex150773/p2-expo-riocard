@@ -1,20 +1,28 @@
+import {
+  atualizarUsuarioApi,
+  listarUsuariosApi,
+  type UsuarioApi,
+} from '@/services/api';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Modal,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { listarUsuariosApi, type UsuarioApi } from '@/services/api';
 
 const AZUL = '#087DDD';
 const CINZA = '#777';
+const CHAVE_PERFIL = '@p2_expo:perfil_usuario:v1';
 
 const USUARIO_FALLBACK: UsuarioApi = {
   id: 'demo',
@@ -23,10 +31,10 @@ const USUARIO_FALLBACK: UsuarioApi = {
 };
 
 const opcoes = [
-  { id: 'dados', nome: 'Meus dados', icone: 'person-outline' },
+  { id: 'dados', nome: 'Meus dados (editar)', icone: 'person-outline' },
   { id: 'termos', nome: 'Termos de uso', icone: 'document-text-outline' },
   { id: 'privacidade', nome: 'Política de privacidade', icone: 'lock-closed-outline' },
-  { id: 'excluir', nome: 'Excluir cadastro', icone: 'trash-outline' },
+  { id: 'excluir', nome: 'Restaurar dados padrão', icone: 'refresh-outline' },
 ];
 
 export default function PerfilScreen() {
@@ -34,41 +42,115 @@ export default function PerfilScreen() {
   const [carregando, setCarregando] = useState(true);
   const [modoDemonstrativo, setModoDemonstrativo] = useState(false);
 
+  const [modalVisivel, setModalVisivel] = useState(false);
+  const [nomeEdicao, setNomeEdicao] = useState('');
+  const [emailEdicao, setEmailEdicao] = useState('');
+  const [salvando, setSalvando] = useState(false);
+
   useEffect(() => {
     let ativo = true;
 
     async function carregarPerfil() {
+      let perfilLocal: UsuarioApi | null = null;
+      try {
+        const salvo = await AsyncStorage.getItem(CHAVE_PERFIL);
+        if (salvo) perfilLocal = JSON.parse(salvo) as UsuarioApi;
+      } catch {
+        // Ignora falha de leitura local.
+      }
+
       try {
         const lista = await listarUsuariosApi();
         if (!ativo) return;
         if (Array.isArray(lista) && lista.length > 0) {
-          setUsuario(lista[0]);
+          const base = perfilLocal ?? lista[0];
+          setUsuario(base);
           setModoDemonstrativo(false);
         } else {
-          setUsuario(USUARIO_FALLBACK);
+          setUsuario(perfilLocal ?? USUARIO_FALLBACK);
           setModoDemonstrativo(true);
         }
       } catch {
         if (!ativo) return;
-        setUsuario(USUARIO_FALLBACK);
+        setUsuario(perfilLocal ?? USUARIO_FALLBACK);
         setModoDemonstrativo(true);
       } finally {
         if (ativo) setCarregando(false);
       }
     }
 
-    carregarPerfil();
+    void carregarPerfil();
     return () => {
       ativo = false;
     };
   }, []);
 
+  function abrirEdicao() {
+    setNomeEdicao(String(usuario.nome ?? ''));
+    setEmailEdicao(String(usuario.email ?? ''));
+    setModalVisivel(true);
+  }
+
+  async function salvarPerfil() {
+    const nomeLimpo = nomeEdicao.trim();
+    const emailLimpo = emailEdicao.trim();
+
+    if (!nomeLimpo || !emailLimpo || !emailLimpo.includes('@')) {
+      Alert.alert(
+        'Dados inválidos',
+        'Informe um nome e um endereço de e-mail válido.'
+      );
+      return;
+    }
+
+    setSalvando(true);
+    const atualizado: UsuarioApi = {
+      ...usuario,
+      nome: nomeLimpo,
+      email: emailLimpo,
+    };
+
+    try {
+      await AsyncStorage.setItem(CHAVE_PERFIL, JSON.stringify(atualizado));
+      setUsuario(atualizado);
+
+      try {
+        await atualizarUsuarioApi(atualizado.id, {
+          nome: nomeLimpo,
+          email: emailLimpo,
+        });
+        setModoDemonstrativo(false);
+      } catch {
+        setModoDemonstrativo(true);
+      }
+
+      setModalVisivel(false);
+      Alert.alert('Perfil atualizado', 'Seus dados demonstrativos foram salvos.');
+    } catch {
+      Alert.alert('Erro', 'Não foi possível salvar os dados no aparelho.');
+    } finally {
+      setSalvando(false);
+    }
+  }
+
+  async function restaurarPadrao() {
+    await AsyncStorage.removeItem(CHAVE_PERFIL);
+    setUsuario(USUARIO_FALLBACK);
+    try {
+      await atualizarUsuarioApi('demo', {
+        nome: String(USUARIO_FALLBACK.nome),
+        email: String(USUARIO_FALLBACK.email),
+      });
+      setModoDemonstrativo(false);
+    } catch {
+      setModoDemonstrativo(true);
+    }
+    Alert.alert('Dados restaurados', 'O perfil voltou ao usuário de demonstração.');
+  }
+
   function aoSelecionarOpcao(id: string) {
     if (id === 'dados') {
-      Alert.alert(
-        'Meus dados',
-        `Nome: ${String(usuario.nome ?? 'Não informado')}\nE-mail: ${String(usuario.email ?? 'Não informado')}\nID: ${String(usuario.id)}`
-      );
+      abrirEdicao();
       return;
     }
 
@@ -90,8 +172,12 @@ export default function PerfilScreen() {
 
     if (id === 'excluir') {
       Alert.alert(
-        'Excluir cadastro',
-        'Operação simulada: em ambiente acadêmico o usuário de demonstração não é removido permanentemente.'
+        'Restaurar dados padrão',
+        'Deseja voltar os dados do perfil para o usuário de demonstração?',
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          { text: 'Restaurar', onPress: () => void restaurarPadrao() },
+        ]
       );
     }
   }
@@ -114,7 +200,7 @@ export default function PerfilScreen() {
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
         <Text style={styles.title}>Perfil</Text>
 
-        <View style={styles.cardUsuario}>
+        <TouchableOpacity style={styles.cardUsuario} onPress={abrirEdicao}>
           <View style={styles.avatar}>
             <Ionicons name="person" size={30} color="#fff" />
           </View>
@@ -132,13 +218,15 @@ export default function PerfilScreen() {
                 </Text>
                 <Text style={styles.statusFonte}>
                   {modoDemonstrativo
-                    ? 'Modo demonstrativo local (API offline)'
+                    ? 'Salvo localmente (API offline)'
                     : 'Sincronizado com a API'}
                 </Text>
               </>
             )}
           </View>
-        </View>
+
+          <Ionicons name="create-outline" size={22} color={AZUL} />
+        </TouchableOpacity>
 
         {opcoes.map((item) => (
           <TouchableOpacity
@@ -165,6 +253,57 @@ export default function PerfilScreen() {
           </TouchableOpacity>
         ))}
       </ScrollView>
+
+      <Modal
+        visible={modalVisivel}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setModalVisivel(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Editar dados do perfil</Text>
+
+            <Text style={styles.inputLabel}>Nome completo</Text>
+            <TextInput
+              style={styles.input}
+              value={nomeEdicao}
+              onChangeText={setNomeEdicao}
+              placeholder="Seu nome"
+            />
+
+            <Text style={styles.inputLabel}>E-mail</Text>
+            <TextInput
+              style={styles.input}
+              value={emailEdicao}
+              onChangeText={setEmailEdicao}
+              placeholder="seuemail@exemplo.com"
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => setModalVisivel(false)}
+                disabled={salvando}
+              >
+                <Text style={styles.cancelButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modalButton, styles.saveButton]}
+                onPress={() => void salvarPerfil()}
+                disabled={salvando}
+              >
+                <Text style={styles.saveButtonText}>
+                  {salvando ? 'Salvando...' : 'Salvar'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       <View style={styles.bottomNav}>
         <NavItem
@@ -333,6 +472,76 @@ const styles = StyleSheet.create({
 
   deleteText: {
     color: '#d33',
+  },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'center',
+    padding: 20,
+  },
+
+  modalCard: {
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 20,
+  },
+
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: AZUL,
+    marginBottom: 14,
+  },
+
+  inputLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#555',
+    marginBottom: 6,
+    marginTop: 8,
+  },
+
+  input: {
+    borderWidth: 1,
+    borderColor: '#d0d7de',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    height: 44,
+    fontSize: 15,
+    color: '#222',
+    backgroundColor: '#fafbfc',
+  },
+
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 10,
+    marginTop: 20,
+  },
+
+  modalButton: {
+    paddingVertical: 11,
+    paddingHorizontal: 18,
+    borderRadius: 8,
+  },
+
+  cancelButton: {
+    backgroundColor: '#eef1f4',
+  },
+
+  cancelButtonText: {
+    color: '#444',
+    fontWeight: '600',
+  },
+
+  saveButton: {
+    backgroundColor: AZUL,
+  },
+
+  saveButtonText: {
+    color: '#fff',
+    fontWeight: '600',
   },
 
   bottomNav: {

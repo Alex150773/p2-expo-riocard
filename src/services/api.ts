@@ -1,5 +1,5 @@
-import { Platform } from 'react-native';
 import type { Cartao } from '@/data/cartoes';
+import { Platform } from 'react-native';
 
 /**
  * Defina EXPO_PUBLIC_API_URL no arquivo .env da raiz do aplicativo.
@@ -51,6 +51,27 @@ async function consultar<T>(caminho: string): Promise<T> {
 export const listarCartoesApi = () => consultar<Cartao[]>('/cartoes');
 export const listarUsuariosApi = () => consultar<UsuarioApi[]>('/usuarios');
 export const listarServicosApi = () => consultar<ServicoApi[]>('/servicos');
+
+export async function atualizarUsuarioApi(
+  id: string | number,
+  dados: { nome: string; email: string }
+): Promise<UsuarioApi> {
+  const endereco = obterEnderecoApi();
+  const controlador = new AbortController();
+  const limite = setTimeout(() => controlador.abort(), 8000);
+  try {
+    const resposta = await fetch(`${endereco}/usuarios/${encodeURIComponent(String(id))}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(dados),
+      signal: controlador.signal,
+    });
+    if (!resposta.ok) throw new Error(`A API retornou o código HTTP ${resposta.status}.`);
+    return (await resposta.json()) as UsuarioApi;
+  } finally {
+    clearTimeout(limite);
+  }
+}
 
 /** Registra apenas uma operação fictícia. Não altera o saldo do cartão. */
 export async function enviarRecargaApi(recarga: {
