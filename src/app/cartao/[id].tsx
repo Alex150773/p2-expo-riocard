@@ -1,16 +1,83 @@
 import { AppColors } from '@/constants/theme';
-import { useState } from 'react';
 import { useCartoes } from '@/hooks/use-cartoes';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import {
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+const CHAVE_BLOQUEIO = '@p2_expo:cartoes_bloqueados:v1';
 
 export default function DetalhesCartaoScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { cartoes, origem, carregando } = useCartoes();
   const cartao = cartoes.find((item) => item.id === id);
   const [saldoVisivel, setSaldoVisivel] = useState(false);
+  const [bloqueado, setBloqueado] = useState(false);
+
+  useEffect(() => {
+    if (!id) return;
+    let ativo = true;
+
+    async function carregarEstadoBloqueio() {
+      try {
+        const salvo = await AsyncStorage.getItem(CHAVE_BLOQUEIO);
+        if (!ativo || !salvo) return;
+        const mapa = JSON.parse(salvo) as Record<string, boolean>;
+        setBloqueado(Boolean(mapa[id]));
+      } catch {
+        // Mantém estado padrão desbloqueado em caso de leitura inválida.
+      }
+    }
+
+    void carregarEstadoBloqueio();
+    return () => {
+      ativo = false;
+    };
+  }, [id]);
+
+  async function alternarBloqueio() {
+    if (!cartao) return;
+    const proximoEstado = !bloqueado;
+
+    Alert.alert(
+      proximoEstado ? 'Bloquear cartão' : 'Desbloquear cartão',
+      proximoEstado
+        ? `Deseja ativar o bloqueio temporário simulado para o cartão "${cartao.nome}"?`
+        : `Deseja desbloquear o cartão "${cartao.nome}"?`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: proximoEstado ? 'Bloquear' : 'Desbloquear',
+          style: proximoEstado ? 'destructive' : 'default',
+          onPress: async () => {
+            try {
+              const salvo = await AsyncStorage.getItem(CHAVE_BLOQUEIO);
+              const mapa = salvo
+                ? (JSON.parse(salvo) as Record<string, boolean>)
+                : {};
+              mapa[cartao.id] = proximoEstado;
+              await AsyncStorage.setItem(CHAVE_BLOQUEIO, JSON.stringify(mapa));
+              setBloqueado(proximoEstado);
+            } catch {
+              Alert.alert(
+                'Erro',
+                'Não foi possível salvar o status do cartão no dispositivo.'
+              );
+            }
+          },
+        },
+      ]
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -23,29 +90,69 @@ export default function DetalhesCartaoScreen() {
       </View>
 
       {!cartao ? (
-
         <View style={styles.empty}>
-          <Text style={styles.title}>{carregando ? "Carregando cartão..." : "Cartão não encontrado"}</Text>
-          <Text style={styles.secondary}>O cartão selecionado não está disponível.</Text>
-          <TouchableOpacity style={styles.button} onPress={() => router.replace('/cartoes')}>
+          <Text style={styles.title}>
+            {carregando ? 'Carregando cartão...' : 'Cartão não encontrado'}
+          </Text>
+          <Text style={styles.secondary}>
+            O cartão selecionado não está disponível.
+          </Text>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => router.replace('/cartoes')}
+          >
             <Text style={styles.buttonText}>Voltar aos meus cartões</Text>
           </TouchableOpacity>
         </View>
       ) : (
         <ScrollView contentContainerStyle={styles.content}>
-          <View style={[styles.cardPreview, { backgroundColor: cartao.cor }]}>
-            <MaterialCommunityIcons name="credit-card-outline" size={42} color="#fff" />
+          <View
+            style={[
+              styles.cardPreview,
+              { backgroundColor: bloqueado ? '#6c757d' : cartao.cor },
+            ]}
+          >
+            <View style={styles.cardTopRow}>
+              <MaterialCommunityIcons
+                name="credit-card-outline"
+                size={42}
+                color="#fff"
+              />
+              {bloqueado ? (
+                <View style={styles.lockBadge}>
+                  <Ionicons name="lock-closed" size={14} color="#fff" />
+                  <Text style={styles.lockBadgeText}>Bloqueado</Text>
+                </View>
+              ) : null}
+            </View>
+
             <Text style={styles.previewName}>{cartao.nome}</Text>
             <Text style={styles.previewNumber}>{cartao.numero}</Text>
+
             <View style={styles.balanceRow}>
               <View>
                 <Text style={styles.balanceLabel}>Saldo demonstrativo</Text>
                 <Text style={styles.balanceValue}>
-                  {saldoVisivel ? cartao.saldoDemonstrativo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 'R$ • • • • •'}
+                  {saldoVisivel
+                    ? cartao.saldoDemonstrativo.toLocaleString('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL',
+                      })
+                    : 'R$ • • • • •'}
                 </Text>
               </View>
-              <TouchableOpacity accessibilityRole="button" accessibilityLabel={saldoVisivel ? 'Ocultar saldo' : 'Mostrar saldo'} onPress={() => setSaldoVisivel((atual) => !atual)}>
-                <Ionicons name={saldoVisivel ? 'eye-outline' : 'eye-off-outline'} size={28} color="#fff" />
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel={
+                  saldoVisivel ? 'Ocultar saldo' : 'Mostrar saldo'
+                }
+                onPress={() => setSaldoVisivel((atual) => !atual)}
+              >
+                <Ionicons
+                  name={saldoVisivel ? 'eye-outline' : 'eye-off-outline'}
+                  size={28}
+                  color="#fff"
+                />
               </TouchableOpacity>
             </View>
           </View>
@@ -58,24 +165,83 @@ export default function DetalhesCartaoScreen() {
             <Text style={styles.label}>Número</Text>
             <Text style={styles.value}>{cartao.numero}</Text>
             <View style={styles.divider} />
+            <Text style={styles.label}>Situação</Text>
+            <Text
+              style={[
+                styles.value,
+                { color: bloqueado ? '#d33' : '#278020' },
+              ]}
+            >
+              {bloqueado ? 'Bloqueado temporariamente (simulado)' : 'Ativo'}
+            </Text>
+            <View style={styles.divider} />
             <Text style={styles.label}>Bilhete Único Intermunicipal (BUI)</Text>
-            <Text style={[styles.value, { color: cartao.buiHabilitado ? '#278020' : '#666' }]}>
+            <Text
+              style={[
+                styles.value,
+                { color: cartao.buiHabilitado ? '#278020' : '#666' },
+              ]}
+            >
               {cartao.buiHabilitado ? 'Habilitado' : 'Não habilitado'}
             </Text>
           </View>
 
-          <Text style={styles.notice}>{origem === "api" ? "Dados obtidos da API simulada para demonstração acadêmica." : "Modo demonstrativo: dados fictícios locais."}</Text>
-          <TouchableOpacity style={styles.button} onPress={() => router.push('/recarga')}>
+          <Text style={styles.notice}>
+            {origem === 'api'
+              ? 'Dados obtidos da API simulada para demonstração acadêmica.'
+              : 'Modo demonstrativo: dados fictícios locais.'}
+          </Text>
+
+          <TouchableOpacity
+            style={[styles.button, bloqueado && styles.buttonDisabled]}
+            disabled={bloqueado}
+            onPress={() => router.push('/recarga')}
+          >
             <MaterialCommunityIcons name="cash-plus" size={22} color="#fff" />
-            <Text style={styles.buttonText}>Ir para recarga</Text>
+            <Text style={styles.buttonText}>
+              {bloqueado ? 'Recarga indisponível (bloqueado)' : 'Ir para recarga'}
+            </Text>
           </TouchableOpacity>
+
           <TouchableOpacity
             style={[styles.button, styles.historyButton]}
             accessibilityRole="button"
-            onPress={() => router.push({ pathname: '/historico-recargas', params: { cartaoId: cartao.id } })}
+            onPress={() =>
+              router.push({
+                pathname: '/historico-recargas',
+                params: { cartaoId: cartao.id },
+              })
+            }
           >
             <Ionicons name="time-outline" size={22} color={AppColors.azul} />
-            <Text style={[styles.buttonText, styles.historyButtonText]}>Histórico deste cartão</Text>
+            <Text style={[styles.buttonText, styles.historyButtonText]}>
+              Histórico deste cartão
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.button,
+              bloqueado ? styles.unlockButton : styles.lockButton,
+            ]}
+            accessibilityRole="button"
+            onPress={() => void alternarBloqueio()}
+          >
+            <Ionicons
+              name={bloqueado ? 'lock-open-outline' : 'lock-closed-outline'}
+              size={22}
+              color={bloqueado ? '#278020' : '#d33'}
+            />
+            <Text
+              style={[
+                styles.buttonText,
+                { color: bloqueado ? '#278020' : '#d33' },
+              ]}
+            >
+              {bloqueado
+                ? 'Desbloquear cartão'
+                : 'Bloquear cartão temporariamente'}
+            </Text>
           </TouchableOpacity>
         </ScrollView>
       )}
@@ -85,25 +251,102 @@ export default function DetalhesCartaoScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#f9faf7' },
-  header: { height: 95, backgroundColor: AppColors.azul, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20 },
+  header: {
+    height: 95,
+    backgroundColor: AppColors.azul,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+  },
   headerTitle: { fontSize: 21, color: '#fff', fontWeight: '700' },
   content: { padding: 18, paddingBottom: 40 },
-  cardPreview: { minHeight: 185, borderRadius: 12, padding: 22, justifyContent: 'space-between', marginBottom: 28 },
+  cardPreview: {
+    minHeight: 185,
+    borderRadius: 12,
+    padding: 22,
+    justifyContent: 'space-between',
+    marginBottom: 28,
+  },
+  cardTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  lockBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+  },
+  lockBadgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '700',
+  },
   previewName: { color: '#fff', fontSize: 22, fontWeight: '700', marginTop: 16 },
-  balanceRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 18 },
+  balanceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 18,
+  },
   balanceLabel: { color: '#fff', fontSize: 12 },
   balanceValue: { color: '#fff', fontSize: 23, fontWeight: '700', marginTop: 5 },
   previewNumber: { color: '#fff', fontSize: 18, marginTop: 5 },
-  title: { color: AppColors.azul, fontSize: 24, fontWeight: '700', marginBottom: 16 },
-  infoBox: { backgroundColor: '#fff', padding: 18, borderRadius: 12, borderWidth: 1, borderColor: '#e7e7e7' },
+  title: {
+    color: AppColors.azul,
+    fontSize: 24,
+    fontWeight: '700',
+    marginBottom: 16,
+  },
+  infoBox: {
+    backgroundColor: '#fff',
+    padding: 18,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e7e7e7',
+  },
   label: { color: '#777', fontSize: 14, marginBottom: 5 },
   value: { color: '#222', fontSize: 18, fontWeight: '600' },
   divider: { height: 1, backgroundColor: '#eee', marginVertical: 17 },
   notice: { color: '#666', fontSize: 13, marginVertical: 22, lineHeight: 19 },
-  button: { minHeight: 54, backgroundColor: AppColors.azul, borderRadius: 9, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10, paddingHorizontal: 15 },
+  button: {
+    minHeight: 54,
+    backgroundColor: AppColors.azul,
+    borderRadius: 9,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 15,
+  },
+  buttonDisabled: {
+    backgroundColor: '#9aa4ae',
+  },
   buttonText: { color: '#fff', fontSize: 17, fontWeight: '600' },
-  historyButton: { backgroundColor: '#fff', borderWidth: 1, borderColor: AppColors.azul, marginTop: 12 },
+  historyButton: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: AppColors.azul,
+    marginTop: 12,
+  },
   historyButtonText: { color: AppColors.azul },
+  lockButton: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#d33',
+    marginTop: 12,
+  },
+  unlockButton: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#278020',
+    marginTop: 12,
+  },
   empty: { flex: 1, padding: 24, justifyContent: 'center' },
   secondary: { color: '#666', marginBottom: 24 },
 });
