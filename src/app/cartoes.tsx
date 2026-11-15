@@ -36,7 +36,13 @@ export default function CartoesScreen() {
       >
         <Text style={styles.title}>Meus cartões</Text>
 
-        <View style={styles.card}>
+        <TouchableOpacity
+          style={styles.card}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel={`Ver detalhes do cartão ${CARTOES_DEMO[0].nome}`}
+          onPress={() => router.push({ pathname: "/cartao/[id]", params: { id: CARTOES_DEMO[0].id } })}
+        >
           <View style={[styles.cardImage, { backgroundColor: CARTOES_DEMO[0].cor }]}>
             <MaterialCommunityIcons
               name="credit-card-outline"
@@ -49,9 +55,15 @@ export default function CartoesScreen() {
             <Text style={styles.cardName}>{CARTOES_DEMO[0].nome}</Text>
             <Text style={styles.cardNumber}>{CARTOES_DEMO[0].numero}</Text>
           </View>
-        </View>
+        </TouchableOpacity>
 
-        <View style={styles.card}>
+        <TouchableOpacity
+          style={styles.card}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel={`Ver detalhes do cartão ${CARTOES_DEMO[1].nome}`}
+          onPress={() => router.push({ pathname: "/cartao/[id]", params: { id: CARTOES_DEMO[1].id } })}
+        >
           <View style={[styles.cardImage, { backgroundColor: CARTOES_DEMO[1].cor }]}>
             <MaterialCommunityIcons
               name="credit-card-outline"
@@ -68,7 +80,7 @@ export default function CartoesScreen() {
           <View style={styles.status}>
             <Text style={styles.statusText}>BUI habilitado ✓</Text>
           </View>
-        </View>
+        </TouchableOpacity>
       </ScrollView>
 
       <TouchableOpacity style={styles.addButton}>
