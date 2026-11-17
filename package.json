@@ -41,7 +41,7 @@
                     "ios":  "expo start --ios",
                     "web":  "expo start --web",
                     "lint":  "expo lint",
-                    "dev":  "concurrently --raw --kill-others \"npm --prefix api start\" \"expo start --clear\""
+                    "dev": "node scripts/configurar-ip-api.cjs && concurrently --raw --kill-others \"npm --prefix api start\" \"expo start --clear\""
                 },
     "private":  true
 }

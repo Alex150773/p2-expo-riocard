@@ -1,60 +1,74 @@
+
 # P2 - Aplicativo inspirado no Riocard
 
-Projeto acadêmico da disciplina de **Desenvolvimento de Aplicativos Híbridos**, desenvolvido com React Native, Expo e TypeScript. A P2 amplia as telas da P1 com navegação funcional, dados demonstrativos, uma API REST simulada e armazenamento local.
+Projeto acadêmico da disciplina de Desenvolvimento de Aplicativos Híbridos, desenvolvido com React Native, Expo e TypeScript.
 
-> **Projeto exclusivamente acadêmico.** Não é um aplicativo oficial da Riocard. Cartões, saldos e recargas são demonstrativos. Não há cobrança ou movimentação financeira real.
+O aplicativo simula funcionalidades de cartões de transporte, recargas e serviços.
 
-## Funcionalidades implementadas
+**Aviso:** projeto exclusivamente acadêmico, sem vínculo oficial com a Riocard. Cartões, saldos e recargas são demonstrativos. Não existem pagamentos reais.
 
-### Etapa 1 (até o commit `c716aa9`)
-- Tela inicial e navegação entre as áreas do aplicativo.
-- Listagem de cartões e tela de detalhes, com visualização de saldo demonstrativo.
-- Seleção de cartão e valor para realizar recarga simulada.
-- Confirmação de recarga e histórico local, com armazenamento no celular.
-- Consulta de cartões pela API JSON Server, com dados locais alternativos se o servidor estiver indisponível.
-- Registro de recargas simuladas na API quando disponível.
-- Sincronização automática de recargas locais pendentes enquanto o aplicativo estiver aberto e houver oportunidade de comunicação com o servidor.
+## Funcionalidades
 
-### Etapa 2 (commits `053d8a5` a `eb73c34` e atualização final)
-- Integração da tela de **Perfil** com a API (`/usuarios`), mantendo modo demonstrativo local quando offline.
-- Edição de nome e e-mail do usuário na tela de **Perfil**, com persistência local (`AsyncStorage`) e sincronização com a API (`PATCH /usuarios/demo`), além da opção de restaurar os dados padrão.
-- Integração da tela de **Serviços** com a API (`/servicos`) para exibição de serviços em destaque com alternativa local.
-- Busca em tempo real na tela de **Serviços**, filtrando itens da API e do menu completo sem diferenciação de maiúsculas ou acentos.
-- Bloqueio e desbloqueio temporário simulado na tela de **Detalhes do cartão**, persistido no dispositivo, com indicador visual e bloqueio preventivo da opção de recarga.
-- Resumo financeiro (quantidade e total acumulado), selo de status por item (sincronizada ou salva localmente), contagem de pendências e botão de sincronização manual no **Histórico de recargas**.
+- Tela inicial com navegação entre as principais áreas.
+- Consulta, cadastro e exclusão de cartões locais.
+- Visualização de detalhes, saldo demonstrativo e bloqueio temporário de cartões.
+- Seleção de cartões e recargas com valores predefinidos ou personalizados.
+- Confirmação e histórico de recargas simuladas.
+- Armazenamento local com AsyncStorage.
+- Comunicação com API REST simulada pelo JSON Server.
+- Funcionamento demonstrativo quando a API está indisponível.
+- Sincronização de recargas pendentes.
+- Perfil com edição de nome e e-mail.
+- Serviços com busca e dados demonstrativos.
 
-## Tecnologias utilizadas
+## Tecnologias
 
-- React Native e Expo
-- TypeScript e Expo Router
-- JSON Server (API REST simulada)
-- Arquivo `api/db.json` (dados de demonstração no servidor)
-- AsyncStorage (histórico, preferências e dados locais no celular)
-- HTTP e JSON para comunicação entre aplicativo e API
-- Git e GitHub para versionamento
+- React Native, Expo SDK 57 e Expo Router
+- TypeScript
+- JSON Server e arquivo `api/db.json`
+- AsyncStorage
+- Git e GitHub
 
-Não é necessário instalar MySQL ou PostgreSQL para executar esta versão do projeto.
+Não é necessário instalar MySQL ou PostgreSQL.
+
+## Instalação
+
+No computador, instale Node.js e Git.
+
+Clone o repositório:
+
+```powershell
+git clone https://github.com/Alex150773/p2-expo-riocard.git
+cd p2-expo-riocard
+npm install
+npm --prefix api install
+```
+
+## Execução
+
+Conecte o computador e o celular Android à mesma rede Wi-Fi.
+
+Execute na pasta principal:
+
+```powershell
+npm run dev
+```
+
+Esse comando identifica automaticamente o IPv4 do computador, configura a URL da API no arquivo `.env` e inicia o JSON Server e o Expo.
+
+Abra o aplicativo usando o QR Code exibido no terminal.
+
+**Importante:** utilize uma versão do Expo Go compatível com o **Expo SDK 57**. Uma versão compatível apenas com o SDK 58 pode apresentar erro ao abrir este projeto.
+
+Se houver mais de uma interface de rede ativa, a identificação automática poderá solicitar uma verificação manual.
+
+## Observações
+
+- A API utiliza a porta `3001`.
+- O computador deve permanecer ligado enquanto o aplicativo utiliza a API local.
+- O arquivo `.env` é gerado ou atualizado automaticamente e não deve ser enviado ao GitHub.
+- Os dados de demonstração não representam cartões ou operações reais.
 
 ## Repositório
 
 https://github.com/Alex150773/p2-expo-riocard
-
-## O que instalar
-
-**No computador:** Node.js, Git e um editor como o VS Code. O Expo e o JSON Server serão executados pelo terminal após instalar as dependências do projeto.
-
-**No celular Android:** apenas o aplicativo **Expo Go**, compatível com a versão do Expo utilizada no projeto. **Não é necessário instalar VS Code, Node.js ou Git no celular.**
-
-Para testar pelo Expo Go usando a rede local, conecte o computador e o celular à mesma rede Wi-Fi.
-
-## Como baixar e instalar
-
-Abra o PowerShell no computador:
-
-```powershell
-git clone [https://github.com/Alex150773/p2-expo-riocard.git](https://github.com/Alex150773/p2-expo-riocard.git)
-cd p2-expo-riocard
-npm install
-cd api
-npm install
-cd ..
