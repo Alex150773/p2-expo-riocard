@@ -20,8 +20,8 @@ const CINZA = '#777';
 const SERVICOS_API_FALLBACK: ServicoApi[] = [
   {
     id: 'recarga',
-    nome: 'Recarga simulada',
-    descricao: 'Simule uma recarga sem cobrança real',
+    nome: 'Recarga',
+    descricao: 'Escolha um valor para recarga',
   },
   {
     id: 'historico',
@@ -62,7 +62,7 @@ const servicosMenu = [
   {
     nome: 'Meus pedidos',
     icone: 'receipt-outline',
-    info: 'Consulte suas recargas simuladas na opção Histórico de recargas.',
+    info: 'Consulte suas recargas na opção Histórico de recargas.',
   },
   { nome: 'Recarregue seu cartão', icone: 'cash-outline', rota: '/recarga' },
   {

@@ -80,7 +80,7 @@ export default function HomeScreen() {
               <Ionicons name={saldoVisivel ? 'eye-outline' : 'eye-off-outline'} size={28} color="#fff" />
             </TouchableOpacity>
           </View>
-          <Text style={styles.demoNotice}>{origem === "api" ? "Saldo da API simulada" : "Saldo fictício para demonstração"}</Text>
+          <Text style={styles.demoNotice}>Saldo demonstrativo</Text>
 
           <View style={styles.paymentRow}>
             <View style={styles.paymentOption}>

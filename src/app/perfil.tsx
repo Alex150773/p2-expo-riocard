@@ -216,11 +216,6 @@ export default function PerfilScreen() {
                 <Text style={styles.emailUsuario}>
                   {String(usuario.email ?? 'demo@example.com')}
                 </Text>
-                <Text style={styles.statusFonte}>
-                  {modoDemonstrativo
-                    ? 'Salvo localmente (API offline)'
-                    : 'Sincronizado com a API'}
-                </Text>
               </>
             )}
           </View>

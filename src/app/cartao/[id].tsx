@@ -51,7 +51,7 @@ export default function DetalhesCartaoScreen() {
     Alert.alert(
       proximoEstado ? 'Bloquear cartão' : 'Desbloquear cartão',
       proximoEstado
-        ? `Deseja ativar o bloqueio temporário simulado para o cartão "${cartao.nome}"?`
+        ? `Deseja ativar o bloqueio temporário para o cartão "${cartao.nome}"?`
         : `Deseja desbloquear o cartão "${cartao.nome}"?`,
       [
         { text: 'Cancelar', style: 'cancel' },
@@ -172,7 +172,7 @@ export default function DetalhesCartaoScreen() {
                 { color: bloqueado ? '#d33' : '#278020' },
               ]}
             >
-              {bloqueado ? 'Bloqueado temporariamente (simulado)' : 'Ativo'}
+              {bloqueado ? 'Bloqueado temporariamente' : 'Ativo'}
             </Text>
             <View style={styles.divider} />
             <Text style={styles.label}>Bilhete Único Intermunicipal (BUI)</Text>
@@ -187,9 +187,7 @@ export default function DetalhesCartaoScreen() {
           </View>
 
           <Text style={styles.notice}>
-            {origem === 'api'
-              ? 'Dados obtidos da API simulada para demonstração acadêmica.'
-              : 'Modo demonstrativo: dados fictícios locais.'}
+            Dados demonstrativos. Nenhum saldo real é consultado.
           </Text>
 
           <TouchableOpacity

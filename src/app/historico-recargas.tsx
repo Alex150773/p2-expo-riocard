@@ -86,7 +86,7 @@ export default function HistoricoRecargasScreen() {
       } else {
         Alert.alert(
           'Tudo atualizado',
-          'Todas as recargas locais já estão sincronizadas com a API.'
+          'Todas as recargas já estão atualizadas.'
         );
       }
     } catch {
@@ -130,7 +130,7 @@ export default function HistoricoRecargasScreen() {
 
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.description}>
-          Recargas simuladas salvas neste dispositivo. Nenhum pagamento ou crédito real foi realizado.
+          Histórico de operações demonstrativas. Nenhuma cobrança real é realizada.
         </Text>
 
         <View style={styles.filters}>
@@ -156,7 +156,7 @@ export default function HistoricoRecargasScreen() {
           <View style={styles.summaryCard}>
             <View style={{ flex: 1 }}>
               <Text style={styles.summaryLabel}>
-                Total simulado ({registros.length})
+                Total de recargas ({registros.length})
               </Text>
               <Text style={styles.summaryValue}>{moeda(totalSimulado)}</Text>
               {pendentes > 0 ? (
@@ -182,7 +182,7 @@ export default function HistoricoRecargasScreen() {
                   { color: apiDisponivel ? '#278020' : '#777' },
                 ]}
               >
-                {apiDisponivel ? 'API conectada' : 'Sincronizar'}
+                {'Sincronizar'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -199,12 +199,11 @@ export default function HistoricoRecargasScreen() {
           </View>
         ) : registros.length === 0 ? (
           <Text style={styles.emptyText}>
-            Nenhuma recarga simulada encontrada para este filtro.
+            Nenhuma recarga encontrada para este filtro.
           </Text>
         ) : (
           registros.map((registro) => {
             const cartao = CARTOES_DEMO.find((item) => item.id === registro.cartaoId);
-            const sincronizada = apiDisponivel && idsSincronizados.has(registro.id);
 
             return (
               <View style={styles.entry} key={registro.id}>
@@ -212,30 +211,13 @@ export default function HistoricoRecargasScreen() {
                   <Text style={styles.entryTitle}>
                     {cartao?.nome ?? 'Cartão não encontrado'}
                   </Text>
-                  <View
-                    style={[
-                      styles.syncBadge,
-                      sincronizada ? styles.syncBadgeOk : styles.syncBadgeLocal,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.syncBadgeText,
-                        sincronizada
-                          ? styles.syncBadgeTextOk
-                          : styles.syncBadgeTextLocal,
-                      ]}
-                    >
-                      {sincronizada ? 'Sincronizada' : 'Salva localmente'}
-                    </Text>
-                  </View>
-                </View>
+</View>
 
                 <Text style={styles.amount}>{moeda(registro.valor)}</Text>
                 <Text style={styles.entryDate}>
                   {new Date(registro.data).toLocaleString('pt-BR')}
                 </Text>
-                <Text style={styles.simulated}>Recarga simulada</Text>
+                <Text style={styles.simulated}>Recarga</Text>
               </View>
             );
           })

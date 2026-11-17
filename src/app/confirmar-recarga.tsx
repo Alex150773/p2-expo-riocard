@@ -13,7 +13,14 @@ export default function ConfirmarRecargaScreen() {
   const { cartaoId, valor: valorParam } = useLocalSearchParams<{ cartaoId?: string; valor?: string }>();
   const cartao = CARTOES_DEMO.find((item) => item.id === cartaoId);
   const valor = Number(valorParam);
-  const valorValido = Number.isFinite(valor) && [10, 20, 30, 50, 100].includes(valor);
+
+  const valorValido =
+    typeof valorParam === 'string' &&
+    valorParam.trim() !== '' &&
+    Number.isFinite(valor) &&
+    valor >= 0.01 &&
+    valor <= 1000 &&
+    Number.isInteger(Math.round(valor * 10000) / 100);
   const [confirmado, setConfirmado] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const bloqueado = useRef(false);
@@ -47,7 +54,7 @@ export default function ConfirmarRecargaScreen() {
         <TouchableOpacity onPress={() => confirmado ? router.replace('/') : router.back()} accessibilityLabel="Voltar">
           <Ionicons name="arrow-back" size={28} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{confirmado ? 'Simulação concluída' : 'Confirmar recarga'}</Text>
+        <Text style={styles.headerTitle}>{confirmado ? 'Recarga concluída' : 'Confirmar recarga'}</Text>
         <View style={{ width: 28 }} />
       </View>
       {!cartao || !valorValido ? (
@@ -60,10 +67,10 @@ export default function ConfirmarRecargaScreen() {
       ) : confirmado ? (
         <View style={styles.success}>
           <Ionicons name="checkmark-circle-outline" size={74} color="#25803b" />
-          <Text style={styles.title}>Recarga simulada com sucesso!</Text>
+          <Text style={styles.title}>Recarga registrada com sucesso!</Text>
           <Text style={styles.description}>Cartão: {cartao.nome}</Text>
           <Text style={styles.description}>Valor: {formatar(valor)}</Text>
-          <Text style={styles.notice}>Nenhuma cobrança ou crédito real foi realizado. Esta operação foi salva no histórico deste dispositivo.</Text>
+          <Text style={styles.notice}>Operação demonstrativa salva no histórico deste dispositivo.</Text>
           <TouchableOpacity style={styles.button} onPress={() => router.push('/historico-recargas')}>
             <Text style={styles.buttonText}>Ver histórico de recargas</Text>
           </TouchableOpacity>
@@ -77,7 +84,7 @@ export default function ConfirmarRecargaScreen() {
             <Text style={styles.title}>Confira os dados</Text>
             <View style={styles.summary}>
               <Text style={styles.label}>Tipo de recarga</Text>
-              <Text style={styles.value}>Comum (simulada)</Text>
+              <Text style={styles.value}>Comum</Text>
               <View style={styles.divider} />
               <Text style={styles.label}>Cartão</Text>
               <Text style={styles.value}>{cartao.nome}</Text>
@@ -86,13 +93,13 @@ export default function ConfirmarRecargaScreen() {
               <Text style={styles.label}>Valor</Text>
               <Text style={styles.amount}>{formatar(valor)}</Text>
             </View>
-            <Text style={styles.notice}>Esta é uma simulação. Nenhum pagamento será realizado e o saldo do cartão não será alterado.</Text>
+            <Text style={styles.notice}>Ambiente de demonstração. Nenhuma cobrança será realizada.</Text>
           </ScrollView>
           <TouchableOpacity style={styles.cancelButton} onPress={() => router.back()}>
             <Text style={styles.cancelText}>Alterar valor</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.footerButton, salvando && { opacity: 0.6 }]} disabled={salvando} onPress={confirmar}>
-            <Text style={styles.buttonText}>{salvando ? 'Salvando...' : 'Confirmar simulação'}</Text>
+            <Text style={styles.buttonText}>{salvando ? 'Salvando...' : 'Confirmar recarga'}</Text>
           </TouchableOpacity>
         </>
       )}
