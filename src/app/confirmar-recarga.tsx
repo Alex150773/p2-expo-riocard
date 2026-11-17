@@ -1,5 +1,5 @@
 import { AppColors } from '@/constants/theme';
-import { CARTOES_DEMO } from '@/data/cartoes';
+import { useCartoes } from '@/hooks/use-cartoes';
 import { Ionicons } from '@expo/vector-icons';
 import { registrarRecarga, sincronizarRecargasEmSegundoPlano } from '@/services/historico-recargas';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -10,8 +10,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 const formatar = (valor: number) => valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
 export default function ConfirmarRecargaScreen() {
-  const { cartaoId, valor: valorParam } = useLocalSearchParams<{ cartaoId?: string; valor?: string }>();
-  const cartao = CARTOES_DEMO.find((item) => item.id === cartaoId);
+  const { cartaoId, valor: valorParam } = useLocalSearchParams<{
+    cartaoId?: string;
+    valor?: string;
+  }>();
+
+  const { cartoes, carregando } = useCartoes();
+  const cartao = cartoes.find((item) => item.id === cartaoId);
+
   const valor = Number(valorParam);
 
   const valorValido =
@@ -57,10 +63,18 @@ export default function ConfirmarRecargaScreen() {
         <Text style={styles.headerTitle}>{confirmado ? 'Recarga concluída' : 'Confirmar recarga'}</Text>
         <View style={{ width: 28 }} />
       </View>
-      {!cartao || !valorValido ? (
+            {!cartao || !valorValido ? (
         <View style={styles.content}>
-          <Text style={styles.title}>Dados da recarga inválidos</Text>
-          <TouchableOpacity style={styles.button} onPress={() => router.replace('/selecionar-cartoes')}>
+          <Text style={styles.title}>
+            {carregando && !cartao
+              ? 'Carregando cartão...'
+              : 'Dados da recarga inválidos'}
+          </Text>
+          <TouchableOpacity
+            style={styles.button}
+            disabled={carregando}
+            onPress={() => router.replace('/selecionar-cartoes')}
+          >
             <Text style={styles.buttonText}>Selecionar cartão novamente</Text>
           </TouchableOpacity>
         </View>

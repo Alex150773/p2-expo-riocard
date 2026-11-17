@@ -1,5 +1,5 @@
 import { AppColors } from "@/constants/theme";
-import { CARTOES_DEMO } from "@/data/cartoes";
+import { useCartoes } from "@/hooks/use-cartoes";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
@@ -42,7 +42,9 @@ function converterValor(texto: string): number | null {
 
 export default function ValorRecargaScreen() {
   const { cartaoId } = useLocalSearchParams<{ cartaoId?: string }>();
-  const cartao = CARTOES_DEMO.find((item) => item.id === cartaoId);
+  const { cartoes, carregando } = useCartoes();
+
+  const cartao = cartoes.find((item) => item.id === cartaoId);
 
   const [valor, setValor] = useState<number>(20);
   const [outroValor, setOutroValor] = useState(false);
@@ -95,12 +97,15 @@ export default function ValorRecargaScreen() {
         <View style={{ width: 28 }} />
       </View>
 
-      {!cartao ? (
-        <View style={styles.content}>
-          <Text style={styles.title}>Cartão não encontrado</Text>
+          {!cartao ? (
+            <View style={styles.content}>
+              <Text style={styles.title}>
+                {carregando ? "Carregando cartão..." : "Cartão não encontrado"}
+              </Text>
 
           <TouchableOpacity
             style={styles.button}
+            disabled={carregando}
             onPress={() => router.replace("/selecionar-cartoes")}
           >
             <Text style={styles.buttonText}>Selecionar cartão</Text>

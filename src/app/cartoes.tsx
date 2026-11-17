@@ -1,17 +1,17 @@
-import { useCartoes } from '@/hooks/use-cartoes';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useCartoes } from "@/hooks/use-cartoes";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import {
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-} from 'react-native';
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-const AZUL = '#087DDD';
-const CINZA = '#777';
+const AZUL = "#087DDD";
+const CINZA = "#777";
 
 export default function CartoesScreen() {
   const { cartoes } = useCartoes();
@@ -38,10 +38,19 @@ export default function CartoesScreen() {
         <Text style={styles.title}>Meus cartões</Text>
         <TouchableOpacity
           accessibilityRole="button"
-          onPress={() => router.push('/historico-recargas')}
-          style={{ alignSelf: 'flex-start', paddingVertical: 12, paddingHorizontal: 14, marginBottom: 14, borderRadius: 8, backgroundColor: '#e9f4ff' }}
+          onPress={() => router.push("/historico-recargas")}
+          style={{
+            alignSelf: "flex-start",
+            paddingVertical: 12,
+            paddingHorizontal: 14,
+            marginBottom: 14,
+            borderRadius: 8,
+            backgroundColor: "#e9f4ff",
+          }}
         >
-          <Text style={{ color: AZUL, fontWeight: '700' }}>Ver histórico de recargas</Text>
+          <Text style={{ color: AZUL, fontWeight: "700" }}>
+            Ver histórico de recargas
+          </Text>
         </TouchableOpacity>
 
         {cartoes.length === 0 ? <Text>Nenhum cartão cadastrado.</Text> : null}
@@ -52,23 +61,37 @@ export default function CartoesScreen() {
             activeOpacity={0.8}
             accessibilityRole="button"
             accessibilityLabel={`Ver detalhes do cartão ${cartao.nome}`}
-            onPress={() => router.push({ pathname: '/cartao/[id]', params: { id: cartao.id } })}
+            onPress={() =>
+              router.push({
+                pathname: "/cartao/[id]",
+                params: { id: cartao.id },
+              })
+            }
           >
             <View style={[styles.cardImage, { backgroundColor: cartao.cor }]}>
-              <MaterialCommunityIcons name="credit-card-outline" size={30} color="#fff" />
+              <MaterialCommunityIcons
+                name="credit-card-outline"
+                size={30}
+                color="#fff"
+              />
             </View>
             <View style={styles.cardInfo}>
               <Text style={styles.cardName}>{cartao.nome}</Text>
               <Text style={styles.cardNumber}>{cartao.numero}</Text>
             </View>
             {cartao.buiHabilitado ? (
-              <View style={styles.status}><Text style={styles.statusText}>BUI habilitado ✓</Text></View>
+              <View style={styles.status}>
+                <Text style={styles.statusText}>BUI habilitado ✓</Text>
+              </View>
             ) : null}
           </TouchableOpacity>
         ))}
       </ScrollView>
 
-      <TouchableOpacity style={styles.addButton}>
+      <TouchableOpacity
+        style={styles.addButton}
+        onPress={() => router.push("/adicionar-cartao")}
+      >
         <Text style={styles.addText}>Adicionar novo cartão</Text>
       </TouchableOpacity>
 
@@ -76,25 +99,17 @@ export default function CartoesScreen() {
         <NavItem
           icon="home-outline"
           label="Início"
-          onPress={() => router.replace('/')}
+          onPress={() => router.replace("/")}
         />
 
-        <NavItem
-          icon="card-outline"
-          label={'Meus\ncartões'}
-          active
-        />
+        <NavItem icon="card-outline" label={"Meus\ncartões"} active />
 
         <TouchableOpacity
           style={styles.rechargeNav}
-          onPress={() => router.push('/recarga')}
+          onPress={() => router.push("/recarga")}
         >
           <View style={styles.rechargeCircle}>
-            <MaterialCommunityIcons
-              name="cash-plus"
-              size={28}
-              color="#fff"
-            />
+            <MaterialCommunityIcons name="cash-plus" size={28} color="#fff" />
           </View>
           <Text style={styles.navText}>Recarga</Text>
         </TouchableOpacity>
@@ -104,7 +119,7 @@ export default function CartoesScreen() {
         <NavItem
           icon="menu"
           label="Serviços"
-          onPress={() => router.push('/servicos')}
+          onPress={() => router.push("/servicos")}
         />
       </View>
     </SafeAreaView>
@@ -124,15 +139,9 @@ function NavItem({
 }) {
   return (
     <TouchableOpacity style={styles.navItem} onPress={onPress}>
-      <Ionicons
-        name={icon}
-        size={27}
-        color={active ? AZUL : CINZA}
-      />
+      <Ionicons name={icon} size={27} color={active ? AZUL : CINZA} />
 
-      <Text style={[styles.navText, active && styles.navActive]}>
-        {label}
-      </Text>
+      <Text style={[styles.navText, active && styles.navActive]}>{label}</Text>
     </TouchableOpacity>
   );
 }
@@ -140,33 +149,33 @@ function NavItem({
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#f9faf7',
+    backgroundColor: "#f9faf7",
   },
 
   header: {
     height: 125,
     backgroundColor: AZUL,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: 20,
   },
 
   logo: {
-    alignItems: 'center',
+    alignItems: "center",
   },
 
   logoRio: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     lineHeight: 29,
   },
 
   logoMais: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 27,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     lineHeight: 28,
   },
 
@@ -182,29 +191,29 @@ const styles = StyleSheet.create({
   title: {
     color: AZUL,
     fontSize: 27,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 24,
   },
 
   card: {
     minHeight: 100,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 12,
     padding: 14,
     marginBottom: 18,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     elevation: 3,
     borderWidth: 1,
-    borderColor: '#eee',
+    borderColor: "#eee",
   },
 
   cardImage: {
     width: 58,
     height: 75,
     borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: 15,
   },
 
@@ -214,75 +223,75 @@ const styles = StyleSheet.create({
 
   cardName: {
     fontSize: 21,
-    fontWeight: '600',
-    color: '#222',
+    fontWeight: "600",
+    color: "#222",
   },
 
   cardNumber: {
     fontSize: 16,
-    color: '#666',
+    color: "#666",
     marginTop: 5,
   },
 
   status: {
-    backgroundColor: '#27951d',
+    backgroundColor: "#27951d",
     borderRadius: 15,
     paddingHorizontal: 8,
     paddingVertical: 5,
   },
 
   statusText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 10,
   },
 
   addButton: {
     height: 67,
     backgroundColor: AZUL,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
 
   addText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 20,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 
   bottomNav: {
     height: 82,
-    flexDirection: 'row',
-    backgroundColor: '#fafbf8',
+    flexDirection: "row",
+    backgroundColor: "#fafbf8",
     borderTopWidth: 1,
-    borderTopColor: '#ddd',
+    borderTopColor: "#ddd",
   },
 
   navItem: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
 
   rechargeNav: {
     flex: 1.1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
 
   rechargeCircle: {
     width: 49,
     height: 49,
     borderRadius: 25,
-    backgroundColor: '#aaa',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#aaa",
+    justifyContent: "center",
+    alignItems: "center",
     marginTop: -19,
   },
 
   navText: {
     color: CINZA,
     fontSize: 11,
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: 3,
   },
 

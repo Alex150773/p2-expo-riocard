@@ -1,5 +1,6 @@
 import { AppColors } from '@/constants/theme';
 import { useCartoes } from '@/hooks/use-cartoes';
+import { excluirCartaoLocal } from '@/services/cartoes-locais';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -78,6 +79,36 @@ export default function DetalhesCartaoScreen() {
       ]
     );
   }
+
+
+function confirmarExclusao() {
+  if (!cartao || !cartao.id.startsWith('local-')) return;
+
+  Alert.alert(
+    'Excluir cartão',
+    `Deseja realmente excluir o cartão "${cartao.nome}"?`,
+    [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Excluir',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await excluirCartaoLocal(cartao.id);
+            router.replace('/cartoes');
+          } catch (erro) {
+            Alert.alert(
+              'Erro ao excluir',
+              erro instanceof Error
+                ? erro.message
+                : 'Não foi possível excluir o cartão.'
+            );
+          }
+        },
+      },
+    ]
+  );
+}
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -241,6 +272,20 @@ export default function DetalhesCartaoScreen() {
                 : 'Bloquear cartão temporariamente'}
             </Text>
           </TouchableOpacity>
+
+{cartao.id.startsWith('local-') && (
+  <TouchableOpacity
+    style={[styles.button, styles.deleteButton]}
+    accessibilityRole="button"
+    accessibilityLabel={`Excluir cartão ${cartao.nome}`}
+    onPress={confirmarExclusao}
+  >
+    <Ionicons name="trash-outline" size={22} color="#d33" />
+    <Text style={[styles.buttonText, styles.deleteButtonText]}>
+      Excluir cartão
+    </Text>
+  </TouchableOpacity>
+)}
         </ScrollView>
       )}
     </SafeAreaView>
@@ -347,4 +392,13 @@ const styles = StyleSheet.create({
   },
   empty: { flex: 1, padding: 24, justifyContent: 'center' },
   secondary: { color: '#666', marginBottom: 24 },
+  deleteButton: {
+  backgroundColor: '#fff',
+  borderWidth: 1,
+  borderColor: '#d33',
+  marginTop: 12,
+},
+deleteButtonText: {
+  color: '#d33',
+},
 });

@@ -1,5 +1,5 @@
 import { AppColors } from '@/constants/theme';
-import { CARTOES_DEMO } from '@/data/cartoes';
+import { useCartoes } from '@/hooks/use-cartoes';
 import { listarRecargasApi } from '@/services/api';
 import {
   listarRecargas,
@@ -26,9 +26,9 @@ const moeda = (valor: number) =>
 
 export default function HistoricoRecargasScreen() {
   const { cartaoId } = useLocalSearchParams<{ cartaoId?: string }>();
-  const filtroInicial = CARTOES_DEMO.some((cartao) => cartao.id === cartaoId)
-    ? cartaoId!
-    : 'todos';
+  const { cartoes, carregando: carregandoCartoes } = useCartoes();
+
+  const filtroInicial = cartaoId ?? 'todos';
   const [historico, setHistorico] = useState<RecargaSimulada[]>([]);
   const [idsSincronizados, setIdsSincronizados] = useState<Set<string>>(new Set());
   const [apiDisponivel, setApiDisponivel] = useState(false);
@@ -134,7 +134,7 @@ export default function HistoricoRecargasScreen() {
         </Text>
 
         <View style={styles.filters}>
-          {[{ id: 'todos', nome: 'Todos' }, ...CARTOES_DEMO].map((cartao) => (
+          {[{ id: 'todos', nome: 'Todos' }, ...cartoes].map((cartao) => (
             <TouchableOpacity
               key={cartao.id}
               style={[styles.filter, filtro === cartao.id && styles.filterActive]}
@@ -203,13 +203,14 @@ export default function HistoricoRecargasScreen() {
           </Text>
         ) : (
           registros.map((registro) => {
-            const cartao = CARTOES_DEMO.find((item) => item.id === registro.cartaoId);
+            const cartao = cartoes.find((item) => item.id === registro.cartaoId);
 
             return (
               <View style={styles.entry} key={registro.id}>
                 <View style={styles.entryHeader}>
                   <Text style={styles.entryTitle}>
-                    {cartao?.nome ?? 'Cartão não encontrado'}
+                    {cartao?.nome ??
+                      (carregandoCartoes ? 'Carregando cartão...' : 'Cartão não disponível')}
                   </Text>
 </View>
 

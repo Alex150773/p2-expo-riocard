@@ -1,8 +1,10 @@
-import { CARTOES_DEMO } from '@/data/cartoes';
+
+import { useCartoes } from '@/hooks/use-cartoes';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -14,7 +16,32 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 const AZUL = '#087DDD';
 
 export default function SelecionarCartoesScreen() {
-  const [selecionado, setSelecionado] = useState(0);
+  const { cartoes, carregando } = useCartoes();
+  const [selecionadoId, setSelecionadoId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (carregando) return;
+
+    const selecionadoExiste = cartoes.some(
+      (cartao) => cartao.id === selecionadoId
+    );
+
+    if (!selecionadoExiste) {
+      setSelecionadoId(cartoes[0]?.id ?? null);
+    }
+  }, [cartoes, carregando, selecionadoId]);
+
+  function continuar() {
+    if (!selecionadoId) {
+      Alert.alert('Selecione um cartão', 'Escolha um cartão para continuar.');
+      return;
+    }
+
+    router.push({
+      pathname: '/valor-recarga',
+      params: { cartaoId: selecionadoId },
+    });
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -36,81 +63,69 @@ export default function SelecionarCartoesScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.title}>Escolha um ou mais cartões</Text>
+        <Text style={styles.title}>Escolha um cartão</Text>
 
         <Text style={styles.subtitle}>
-          Selecione os cartões que deseja recarregar
+          Selecione o cartão que deseja recarregar
         </Text>
 
-        <TouchableOpacity
-          style={[
-            styles.card,
-            selecionado === 0 && styles.cardSelected,
-          ]}
-          onPress={() => setSelecionado(0)}
-        >
-          <View style={[styles.cardImage, { backgroundColor: CARTOES_DEMO[0].cor }]}>
-            <MaterialCommunityIcons
-              name="credit-card-outline"
-              size={31}
-              color="#fff"
+        {carregando ? (
+          <Text style={styles.message}>Carregando cartões...</Text>
+        ) : null}
+
+        {!carregando && cartoes.length === 0 ? (
+          <Text style={styles.message}>
+            Nenhum cartão cadastrado.
+          </Text>
+        ) : null}
+
+        {cartoes.map((cartao) => (
+          <TouchableOpacity
+            key={cartao.id}
+            style={[
+              styles.card,
+              selecionadoId === cartao.id && styles.cardSelected,
+            ]}
+            accessibilityRole="radio"
+            accessibilityState={{
+              checked: selecionadoId === cartao.id,
+            }}
+            onPress={() => setSelecionadoId(cartao.id)}
+          >
+            <View
+              style={[
+                styles.cardImage,
+                { backgroundColor: cartao.cor },
+              ]}
+            >
+              <MaterialCommunityIcons
+                name="credit-card-outline"
+                size={31}
+                color="#fff"
+              />
+            </View>
+
+            <View style={styles.cardInfo}>
+              <Text style={styles.cardName}>{cartao.nome}</Text>
+              <Text style={styles.cardNumber}>{cartao.numero}</Text>
+            </View>
+
+            <Ionicons
+              name={
+                selecionadoId === cartao.id
+                  ? 'radio-button-on'
+                  : 'radio-button-off'
+              }
+              size={26}
+              color={AZUL}
             />
-          </View>
-
-          <View style={styles.cardInfo}>
-            <Text style={styles.cardName}>{CARTOES_DEMO[0].nome}</Text>
-            <Text style={styles.cardNumber}>{CARTOES_DEMO[0].numero}</Text>
-          </View>
-
-          <Ionicons
-            name={
-              selecionado === 0
-                ? 'radio-button-on'
-                : 'radio-button-off'
-            }
-            size={26}
-            color={AZUL}
-          />
-        </TouchableOpacity>
+          </TouchableOpacity>
+        ))}
 
         <TouchableOpacity
-          style={[
-            styles.card,
-            selecionado === 1 && styles.cardSelected,
-          ]}
-          onPress={() => setSelecionado(1)}
+          style={styles.option}
+          onPress={() => router.push('/adicionar-cartao')}
         >
-          <View style={[styles.cardImage, { backgroundColor: CARTOES_DEMO[1].cor }]}>
-            <MaterialCommunityIcons
-              name="credit-card-outline"
-              size={31}
-              color="#fff"
-            />
-          </View>
-
-          <View style={styles.cardInfo}>
-            <Text style={styles.cardName}>{CARTOES_DEMO[1].nome}</Text>
-            <Text style={styles.cardNumber}>{CARTOES_DEMO[1].numero}</Text>
-          </View>
-
-          <Ionicons
-            name={
-              selecionado === 1
-                ? 'radio-button-on'
-                : 'radio-button-off'
-            }
-            size={26}
-            color={AZUL}
-          />
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.option}>
-          <Ionicons name="star-outline" size={26} color={AZUL} />
-          <Text style={styles.optionText}>Cartões favoritos</Text>
-          <Ionicons name="chevron-forward" size={22} color="#888" />
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.option}>
           <Ionicons name="add-circle-outline" size={27} color={AZUL} />
           <Text style={styles.optionText}>Adicionar cartão</Text>
           <Ionicons name="chevron-forward" size={22} color="#888" />
@@ -118,8 +133,12 @@ export default function SelecionarCartoesScreen() {
       </ScrollView>
 
       <TouchableOpacity
-        style={styles.continueButton}
-        onPress={() => router.push({ pathname: "/valor-recarga", params: { cartaoId: CARTOES_DEMO[selecionado].id } })}
+        style={[
+          styles.continueButton,
+          (!selecionadoId || carregando) && styles.buttonDisabled,
+        ]}
+        disabled={!selecionadoId || carregando}
+        onPress={continuar}
       >
         <Text style={styles.continueText}>Continuar</Text>
       </TouchableOpacity>
@@ -183,6 +202,12 @@ const styles = StyleSheet.create({
     marginBottom: 25,
   },
 
+  message: {
+    fontSize: 15,
+    color: '#666',
+    marginBottom: 18,
+  },
+
   card: {
     minHeight: 95,
     backgroundColor: '#fff',
@@ -204,14 +229,9 @@ const styles = StyleSheet.create({
     width: 55,
     height: 70,
     borderRadius: 7,
-    backgroundColor: '#148bd2',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 14,
-  },
-
-  cardPink: {
-    backgroundColor: '#e52a91',
   },
 
   cardInfo: {
@@ -250,6 +270,10 @@ const styles = StyleSheet.create({
     backgroundColor: AZUL,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+
+  buttonDisabled: {
+    backgroundColor: '#9aa4ae',
   },
 
   continueText: {
