@@ -1,10 +1,23 @@
 import { AppColors } from '@/constants/theme';
+import { CARTOES_DEMO } from '@/data/cartoes';
+import { useCartoes } from '@/hooks/use-cartoes';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+const moeda = (valor: number) =>
+  valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
 export default function ValidaMaisScreen() {
+  const { cartoes } = useCartoes();
+  const cartoesDisponiveis = cartoes.length > 0 ? cartoes : [...CARTOES_DEMO];
+  const [cartaoId, setCartaoId] = useState(cartoesDisponiveis[0].id);
+
+  const cartaoSelecionado =
+    cartoesDisponiveis.find((item) => item.id === cartaoId) ?? cartoesDisponiveis[0];
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
@@ -19,15 +32,53 @@ export default function ValidaMaisScreen() {
         <View style={styles.noticeBanner}>
           <Ionicons name="shield-checkmark-outline" size={22} color={AppColors.azul} />
           <Text style={styles.noticeText}>
-            Aviso acadêmico: esta funcionalidade realiza apenas uma simulação local de interface e não se comunica com validadores de ônibus, barcas, trens, metrô ou sistemas oficiais de bilhetagem.
+            Aviso acadêmico: esta funcionalidade realiza apenas uma simulação local de interface e não interage com catracas, validadores ou sistemas oficiais.
           </Text>
         </View>
 
-        <View style={styles.infoCard}>
-          <MaterialCommunityIcons name="cellphone-check" size={38} color={AppColors.azul} />
-          <Text style={styles.infoTitle}>Como funciona o Valida Mais demonstrativo</Text>
-          <Text style={styles.infoText}>
-            Nas próximas etapas, você poderá selecionar um cartão já cadastrado no aplicativo e executar uma simulação local de conferência de recarga/crédito, recebendo um retorno visual imediato.
+        <Text style={styles.sectionTitle}>1. Selecione o cartão</Text>
+
+        <View style={styles.selectorList}>
+          {cartoesDisponiveis.map((cartao) => {
+            const ativo = cartao.id === cartaoSelecionado.id;
+            return (
+              <TouchableOpacity
+                key={cartao.id}
+                style={[styles.cardOption, ativo && styles.cardOptionActive]}
+                activeOpacity={0.8}
+                onPress={() => setCartaoId(cartao.id)}
+              >
+                <View style={styles.cardOptionLeft}>
+                  <MaterialCommunityIcons
+                    name="credit-card-outline"
+                    size={24}
+                    color={ativo ? '#fff' : AppColors.azul}
+                  />
+                  <View style={styles.cardOptionInfo}>
+                    <Text style={[styles.cardOptionName, ativo && styles.textWhite]}>
+                      {cartao.nome}
+                    </Text>
+                    <Text style={[styles.cardOptionNumber, ativo && styles.textWhiteSub]}>
+                      Número: {cartao.numero}
+                    </Text>
+                  </View>
+                </View>
+
+                <Text style={[styles.cardOptionBalance, ativo && styles.textWhite]}>
+                  {moeda(cartao.saldoDemonstrativo)}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        <View style={styles.selectedSummary}>
+          <Text style={styles.summaryLabel}>Cartão pronto para conferência demonstrativa</Text>
+          <Text style={styles.summaryTitle}>
+            {cartaoSelecionado.nome} • {cartaoSelecionado.numero}
+          </Text>
+          <Text style={styles.summaryBalance}>
+            Saldo demonstrativo atual: {moeda(cartaoSelecionado.saldoDemonstrativo)}
           </Text>
         </View>
       </ScrollView>
@@ -60,15 +111,39 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   noticeText: { flex: 1, fontSize: 13, lineHeight: 19, color: '#2b4c73' },
-  infoCard: {
+  sectionTitle: { fontSize: 17, fontWeight: '700', color: '#333', marginBottom: 12 },
+  selectorList: { gap: 10, marginBottom: 18 },
+  cardOption: {
     backgroundColor: '#fff',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e4e4e4',
-    padding: 24,
+    borderColor: '#dcdcdc',
+    padding: 14,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     gap: 10,
   },
-  infoTitle: { fontSize: 17, fontWeight: '700', color: '#333', textAlign: 'center' },
-  infoText: { fontSize: 14, color: '#666', textAlign: 'center', lineHeight: 21 },
+  cardOptionActive: {
+    backgroundColor: AppColors.azul,
+    borderColor: AppColors.azul,
+  },
+  cardOptionLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
+  cardOptionInfo: { flex: 1 },
+  cardOptionName: { fontSize: 16, fontWeight: '700', color: '#333' },
+  cardOptionNumber: { fontSize: 13, color: '#666', marginTop: 2 },
+  cardOptionBalance: { fontSize: 15, fontWeight: '700', color: AppColors.azul },
+  textWhite: { color: '#fff' },
+  textWhiteSub: { color: 'rgba(255,255,255,0.85)' },
+  selectedSummary: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#dce6f2',
+    padding: 16,
+    gap: 4,
+  },
+  summaryLabel: { fontSize: 12, color: '#666' },
+  summaryTitle: { fontSize: 16, fontWeight: '700', color: '#333' },
+  summaryBalance: { fontSize: 14, color: AppColors.azul, fontWeight: '600', marginTop: 2 },
 });
