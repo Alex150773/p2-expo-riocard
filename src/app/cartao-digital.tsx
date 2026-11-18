@@ -19,8 +19,11 @@ function mascararNumero(numero: string): string {
 export default function CartaoDigitalScreen() {
   const { cartoes } = useCartoes();
   const cartoesDisponiveis = cartoes.length > 0 ? cartoes : [...CARTOES_DEMO];
-  const cartaoPrincipal = cartoesDisponiveis[0];
+  const [cartaoId, setCartaoId] = useState(cartoesDisponiveis[0].id);
   const [saldoVisivel, setSaldoVisivel] = useState(true);
+
+  const cartaoSelecionado =
+    cartoesDisponiveis.find((item) => item.id === cartaoId) ?? cartoesDisponiveis[0];
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -33,22 +36,40 @@ export default function CartaoDigitalScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
+        <Text style={styles.sectionLabel}>Alternar cartão</Text>
+        <View style={styles.selectorRow}>
+          {cartoesDisponiveis.map((cartao) => {
+            const ativo = cartao.id === cartaoSelecionado.id;
+            return (
+              <TouchableOpacity
+                key={cartao.id}
+                style={[styles.chip, ativo && styles.chipActive]}
+                onPress={() => setCartaoId(cartao.id)}
+              >
+                <Text style={[styles.chipText, ativo && styles.chipTextActive]}>
+                  {cartao.nome}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
         <View style={styles.cardVisual}>
           <View style={styles.cardTop}>
             <View>
               <Text style={styles.cardBrand}>riocard mais++</Text>
-              <Text style={styles.cardName}>{cartaoPrincipal.nome}</Text>
+              <Text style={styles.cardName}>{cartaoSelecionado.nome}</Text>
             </View>
             <MaterialCommunityIcons name="contactless-payment" size={30} color="#fff" />
           </View>
 
-          <Text style={styles.cardNumber}>{mascararNumero(cartaoPrincipal.numero)}</Text>
+          <Text style={styles.cardNumber}>{mascararNumero(cartaoSelecionado.numero)}</Text>
 
           <View style={styles.balanceSection}>
             <View>
               <Text style={styles.balanceLabel}>Saldo demonstrativo</Text>
               <Text style={styles.balanceValue}>
-                {saldoVisivel ? moeda(cartaoPrincipal.saldoDemonstrativo) : 'R$ • • • • •'}
+                {saldoVisivel ? moeda(cartaoSelecionado.saldoDemonstrativo) : 'R$ • • • • •'}
               </Text>
             </View>
             <TouchableOpacity
@@ -66,14 +87,14 @@ export default function CartaoDigitalScreen() {
         </View>
 
         <View style={styles.infoCard}>
-          <Text style={styles.infoTitle}>Informações do cartão</Text>
+          <Text style={styles.infoTitle}>Informações do cartão selecionado</Text>
           <Text style={styles.infoRow}>
             <Text style={styles.infoLabel}>Modalidade: </Text>
-            {cartaoPrincipal.nome}
+            {cartaoSelecionado.nome}
           </Text>
           <Text style={styles.infoRow}>
             <Text style={styles.infoLabel}>Identificação mascarada: </Text>
-            {mascararNumero(cartaoPrincipal.numero)}
+            {mascararNumero(cartaoSelecionado.numero)}
           </Text>
           <Text style={styles.infoRow}>
             <Text style={styles.infoLabel}>Status: </Text>
@@ -105,6 +126,19 @@ const styles = StyleSheet.create({
   headerTitle: { color: '#fff', fontSize: 20, fontWeight: '700' },
   headerSpacer: { width: 28 },
   content: { padding: 18, paddingBottom: 35 },
+  sectionLabel: { fontSize: 15, fontWeight: '700', color: '#333', marginBottom: 10 },
+  selectorRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 18 },
+  chip: {
+    borderColor: AppColors.azul,
+    borderWidth: 1,
+    borderRadius: 20,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    backgroundColor: '#fff',
+  },
+  chipActive: { backgroundColor: AppColors.azul },
+  chipText: { color: AppColors.azul, fontSize: 14, fontWeight: '600' },
+  chipTextActive: { color: '#fff' },
   cardVisual: {
     backgroundColor: AppColors.azul,
     borderRadius: 14,

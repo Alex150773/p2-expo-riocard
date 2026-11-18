@@ -114,6 +114,7 @@ export default function HomeScreen() {
           <Service
             icon="credit-card-outline"
             title={'Cartão\nDigital'}
+            onPress={() => router.push('/cartao-digital')}
           />
 
           <Service
