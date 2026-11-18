@@ -135,6 +135,7 @@ export default function HomeScreen() {
           <Service
             icon="clipboard-text-outline"
             title={'Meus pedidos'}
+            onPress={() => router.push('/meus-pedidos')}
           />
         </View>
       </ScrollView>

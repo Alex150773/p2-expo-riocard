@@ -29,6 +29,7 @@ export default function MeusPedidosScreen() {
   const [apiDisponivel, setApiDisponivel] = useState(false);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState(false);
+  const [pedidoAbertoId, setPedidoAbertoId] = useState<string | null>(null);
 
   const carregarPedidos = useCallback(async () => {
     setCarregando(true);
@@ -59,6 +60,10 @@ export default function MeusPedidosScreen() {
     }, [carregarPedidos])
   );
 
+  function alternarDetalhes(id: string) {
+    setPedidoAbertoId((atual) => (atual === id ? null : id));
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
@@ -71,7 +76,7 @@ export default function MeusPedidosScreen() {
 
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.description}>
-          Pedidos de recarga demonstrativos registrados no aparelho. Nenhuma cobrança ou pagamento real é realizado.
+          Pedidos de recarga demonstrativos registrados no aparelho. Toque em um pedido para consultar os detalhes. Nenhuma cobrança real é realizada.
         </Text>
 
         {carregando ? (
@@ -98,9 +103,15 @@ export default function MeusPedidosScreen() {
           pedidos.map((pedido) => {
             const cartao = cartoes.find((item) => item.id === pedido.cartaoId);
             const sincronizado = apiDisponivel && idsSincronizados.has(pedido.id);
+            const aberto = pedidoAbertoId === pedido.id;
 
             return (
-              <View style={styles.card} key={pedido.id}>
+              <TouchableOpacity
+                key={pedido.id}
+                style={styles.card}
+                activeOpacity={0.8}
+                onPress={() => alternarDetalhes(pedido.id)}
+              >
                 <View style={styles.cardTop}>
                   <Text style={styles.cardTitle}>
                     {cartao?.nome ??
@@ -127,8 +138,40 @@ export default function MeusPedidosScreen() {
                 <Text style={styles.date}>
                   Data: {new Date(pedido.data).toLocaleString('pt-BR')}
                 </Text>
-                <Text style={styles.demoTag}>Operação demonstrativa • Sem cobrança real</Text>
-              </View>
+
+                <View style={styles.cardFooter}>
+                  <Text style={styles.demoTag}>
+                    {aberto ? 'Ocultar detalhes' : 'Ver detalhes do pedido'}
+                  </Text>
+                  <Ionicons
+                    name={aberto ? 'chevron-up' : 'chevron-down'}
+                    size={18}
+                    color={AppColors.azul}
+                  />
+                </View>
+
+                {aberto ? (
+                  <View style={styles.detailsBox}>
+                    <Text style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Código do registro: </Text>
+                      {pedido.id}
+                    </Text>
+                    <Text style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Cartão destino: </Text>
+                      {cartao ? `${cartao.nome} (${cartao.numero})` : pedido.cartaoId}
+                    </Text>
+                    <Text style={styles.detailRow}>
+                      <Text style={styles.detailLabel}>Situação: </Text>
+                      {sincronizado
+                        ? 'Simulação salva no aparelho e sincronizada com a API local'
+                        : 'Simulação salva apenas no armazenamento local (AsyncStorage)'}
+                    </Text>
+                    <Text style={styles.detailNotice}>
+                      Aviso acadêmico: este pedido representa apenas uma recarga demonstrativa e não corresponde a pagamento real aprovado.
+                    </Text>
+                  </View>
+                ) : null}
+              </TouchableOpacity>
             );
           })
         )}
@@ -178,7 +221,32 @@ const styles = StyleSheet.create({
   statusTextLocal: { color: '#555' },
   amount: { fontSize: 24, fontWeight: '700', color: AppColors.azul, marginTop: 8 },
   date: { fontSize: 14, color: '#666', marginTop: 6 },
-  demoTag: { fontSize: 12, color: '#777', marginTop: 6 },
+  cardFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 10,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+  },
+  demoTag: { fontSize: 13, fontWeight: '600', color: AppColors.azul },
+  detailsBox: {
+    marginTop: 10,
+    backgroundColor: '#f5f8fc',
+    borderRadius: 8,
+    padding: 12,
+    gap: 6,
+  },
+  detailRow: { fontSize: 13, color: '#444', lineHeight: 19 },
+  detailLabel: { fontWeight: '700', color: '#222' },
+  detailNotice: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 4,
+    fontStyle: 'italic',
+    lineHeight: 18,
+  },
   emptyCard: {
     backgroundColor: '#fff',
     borderRadius: 12,
