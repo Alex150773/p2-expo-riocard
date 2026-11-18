@@ -1,8 +1,8 @@
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { AppColors } from '@/constants/theme';
 import { CARTOES_DEMO } from '@/data/cartoes';
 import { useCartoes } from '@/hooks/use-cartoes';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { router } from 'expo-router';
 import { useState } from 'react';
 import {
   ScrollView,
@@ -108,6 +108,7 @@ export default function HomeScreen() {
           <Service
             icon="cellphone-check"
             title={'Valida\nMais'}
+            onPress={() => router.push('/valida-mais')}
           />
 
           <Service

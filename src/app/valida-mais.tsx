@@ -4,19 +4,55 @@ import { useCartoes } from '@/hooks/use-cartoes';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+    ActivityIndicator,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const moeda = (valor: number) =>
   valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
+type ResultadoSimulacao = {
+  cartaoNome: string;
+  cartaoNumero: string;
+  saldo: number;
+  horario: string;
+};
+
 export default function ValidaMaisScreen() {
   const { cartoes } = useCartoes();
   const cartoesDisponiveis = cartoes.length > 0 ? cartoes : [...CARTOES_DEMO];
   const [cartaoId, setCartaoId] = useState(cartoesDisponiveis[0].id);
+  const [simulando, setSimulando] = useState(false);
+  const [resultado, setResultado] = useState<ResultadoSimulacao | null>(null);
 
   const cartaoSelecionado =
     cartoesDisponiveis.find((item) => item.id === cartaoId) ?? cartoesDisponiveis[0];
+
+  function selecionarCartao(id: string) {
+    setCartaoId(id);
+    setResultado(null);
+  }
+
+  function executarSimulacao() {
+    setSimulando(true);
+    setResultado(null);
+
+    setTimeout(() => {
+      setResultado({
+        cartaoNome: cartaoSelecionado.nome,
+        cartaoNumero: cartaoSelecionado.numero,
+        saldo: cartaoSelecionado.saldoDemonstrativo,
+        horario: new Date().toLocaleTimeString('pt-BR'),
+      });
+      setSimulando(false);
+    }, 650);
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -32,7 +68,7 @@ export default function ValidaMaisScreen() {
         <View style={styles.noticeBanner}>
           <Ionicons name="shield-checkmark-outline" size={22} color={AppColors.azul} />
           <Text style={styles.noticeText}>
-            Aviso acadêmico: esta funcionalidade realiza apenas uma simulação local de interface e não interage com catracas, validadores ou sistemas oficiais.
+            Aviso acadêmico: esta funcionalidade realiza apenas uma simulação local no aplicativo e não interage com catracas, validadores de transporte nem sistemas oficiais.
           </Text>
         </View>
 
@@ -46,7 +82,8 @@ export default function ValidaMaisScreen() {
                 key={cartao.id}
                 style={[styles.cardOption, ativo && styles.cardOptionActive]}
                 activeOpacity={0.8}
-                onPress={() => setCartaoId(cartao.id)}
+                disabled={simulando}
+                onPress={() => selecionarCartao(cartao.id)}
               >
                 <View style={styles.cardOptionLeft}>
                   <MaterialCommunityIcons
@@ -72,15 +109,53 @@ export default function ValidaMaisScreen() {
           })}
         </View>
 
-        <View style={styles.selectedSummary}>
-          <Text style={styles.summaryLabel}>Cartão pronto para conferência demonstrativa</Text>
-          <Text style={styles.summaryTitle}>
-            {cartaoSelecionado.nome} • {cartaoSelecionado.numero}
-          </Text>
-          <Text style={styles.summaryBalance}>
-            Saldo demonstrativo atual: {moeda(cartaoSelecionado.saldoDemonstrativo)}
-          </Text>
-        </View>
+        <Text style={styles.sectionTitle}>2. Simulação local</Text>
+
+        <TouchableOpacity
+          style={[styles.actionButton, simulando && styles.actionButtonDisabled]}
+          activeOpacity={0.85}
+          disabled={simulando}
+          onPress={executarSimulacao}
+        >
+          {simulando ? (
+            <>
+              <ActivityIndicator size="small" color="#fff" />
+              <Text style={styles.actionButtonText}>Simulando leitura local...</Text>
+            </>
+          ) : (
+            <>
+              <MaterialCommunityIcons name="cellphone-check" size={22} color="#fff" />
+              <Text style={styles.actionButtonText}>
+                {resultado ? 'Repetir simulação' : 'Simular validação local'}
+              </Text>
+            </>
+          )}
+        </TouchableOpacity>
+
+        {resultado ? (
+          <View style={styles.resultCard}>
+            <View style={styles.resultHeader}>
+              <Ionicons name="checkmark-circle" size={26} color="#278020" />
+              <Text style={styles.resultTitle}>Simulação concluída no aparelho</Text>
+            </View>
+
+            <Text style={styles.resultRow}>
+              <Text style={styles.resultLabel}>Cartão conferido: </Text>
+              {resultado.cartaoNome} ({resultado.cartaoNumero})
+            </Text>
+            <Text style={styles.resultRow}>
+              <Text style={styles.resultLabel}>Saldo demonstrativo exibido: </Text>
+              {moeda(resultado.saldo)}
+            </Text>
+            <Text style={styles.resultRow}>
+              <Text style={styles.resultLabel}>Horário do teste local: </Text>
+              {resultado.horario}
+            </Text>
+            <Text style={styles.resultDisclaimer}>
+              Resultado meramente ilustrativo gerado localmente. Nenhuma validação real em catraca ou sistema oficial foi executada.
+            </Text>
+          </View>
+        ) : null}
       </ScrollView>
     </SafeAreaView>
   );
@@ -112,7 +187,7 @@ const styles = StyleSheet.create({
   },
   noticeText: { flex: 1, fontSize: 13, lineHeight: 19, color: '#2b4c73' },
   sectionTitle: { fontSize: 17, fontWeight: '700', color: '#333', marginBottom: 12 },
-  selectorList: { gap: 10, marginBottom: 18 },
+  selectorList: { gap: 10, marginBottom: 20 },
   cardOption: {
     backgroundColor: '#fff',
     borderRadius: 12,
@@ -135,15 +210,41 @@ const styles = StyleSheet.create({
   cardOptionBalance: { fontSize: 15, fontWeight: '700', color: AppColors.azul },
   textWhite: { color: '#fff' },
   textWhiteSub: { color: 'rgba(255,255,255,0.85)' },
-  selectedSummary: {
-    backgroundColor: '#fff',
+  actionButton: {
+    backgroundColor: AppColors.azul,
+    borderRadius: 10,
+    paddingVertical: 15,
+    paddingHorizontal: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  actionButtonDisabled: { opacity: 0.75 },
+  actionButtonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  resultCard: {
+    marginTop: 18,
+    backgroundColor: '#f2fbf2',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#dce6f2',
+    borderColor: '#b9e2b8',
     padding: 16,
-    gap: 4,
+    gap: 6,
   },
-  summaryLabel: { fontSize: 12, color: '#666' },
-  summaryTitle: { fontSize: 16, fontWeight: '700', color: '#333' },
-  summaryBalance: { fontSize: 14, color: AppColors.azul, fontWeight: '600', marginTop: 2 },
+  resultHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+  resultTitle: { fontSize: 16, fontWeight: '700', color: '#1f6619', flex: 1 },
+  resultRow: { fontSize: 14, color: '#2c472a', lineHeight: 20 },
+  resultLabel: { fontWeight: '700' },
+  resultDisclaimer: {
+    fontSize: 12,
+    color: '#4c6b4a',
+    marginTop: 6,
+    fontStyle: 'italic',
+    lineHeight: 18,
+  },
 });
