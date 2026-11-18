@@ -1,6 +1,7 @@
 import { AppColors } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -49,6 +50,12 @@ const BENEFICIOS_DEMO: BeneficioDemo[] = [
 ];
 
 export default function ClubeRiocardScreen() {
+  const [selecionadoId, setSelecionadoId] = useState<string | null>(null);
+
+  function alternarBeneficio(id: string) {
+    setSelecionadoId((atual) => (atual === id ? null : id));
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
@@ -63,21 +70,57 @@ export default function ClubeRiocardScreen() {
         <View style={styles.noticeBanner}>
           <Ionicons name="information-circle-outline" size={22} color={AppColors.azul} />
           <Text style={styles.noticeText}>
-            Demonstração acadêmica: todos os benefícios abaixo são fictícios e não representam parcerias comerciais ou ofertas reais.
+            Demonstração acadêmica: todos os benefícios abaixo são fictícios e não representam parcerias comerciais ou ofertas reais. Toque em um item para consultar os detalhes.
           </Text>
         </View>
 
         <Text style={styles.sectionTitle}>Benefícios demonstrativos ({BENEFICIOS_DEMO.length})</Text>
 
-        {BENEFICIOS_DEMO.map((beneficio) => (
-          <View key={beneficio.id} style={styles.card}>
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{beneficio.categoria}</Text>
-            </View>
-            <Text style={styles.cardTitle}>{beneficio.titulo}</Text>
-            <Text style={styles.cardSummary}>{beneficio.resumo}</Text>
-          </View>
-        ))}
+        {BENEFICIOS_DEMO.map((beneficio) => {
+          const aberto = selecionadoId === beneficio.id;
+
+          return (
+            <TouchableOpacity
+              key={beneficio.id}
+              style={styles.card}
+              activeOpacity={0.8}
+              onPress={() => alternarBeneficio(beneficio.id)}
+            >
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{beneficio.categoria}</Text>
+              </View>
+              <Text style={styles.cardTitle}>{beneficio.titulo}</Text>
+              <Text style={styles.cardSummary}>{beneficio.resumo}</Text>
+
+              <View style={styles.cardFooter}>
+                <Text style={styles.footerLink}>
+                  {aberto ? 'Ocultar detalhes' : 'Consultar detalhes'}
+                </Text>
+                <Ionicons
+                  name={aberto ? 'chevron-up' : 'chevron-down'}
+                  size={18}
+                  color={AppColors.azul}
+                />
+              </View>
+
+              {aberto ? (
+                <View style={styles.detailsBox}>
+                  <Text style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Condições ilustrativas: </Text>
+                    {beneficio.regras}
+                  </Text>
+                  <Text style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Vigência: </Text>
+                    {beneficio.validade}
+                  </Text>
+                  <Text style={styles.detailNote}>
+                    Aviso: nenhum cupom válido ou resgate comercial externo é gerado por esta tela.
+                  </Text>
+                </View>
+              ) : null}
+            </TouchableOpacity>
+          );
+        })}
       </ScrollView>
     </SafeAreaView>
   );
@@ -128,4 +171,24 @@ const styles = StyleSheet.create({
   badgeText: { fontSize: 11, fontWeight: '700', color: AppColors.azul },
   cardTitle: { fontSize: 17, fontWeight: '700', color: '#333', marginTop: 2 },
   cardSummary: { fontSize: 14, lineHeight: 20, color: '#555' },
+  cardFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 6,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+  },
+  footerLink: { fontSize: 13, fontWeight: '600', color: AppColors.azul },
+  detailsBox: {
+    marginTop: 6,
+    backgroundColor: '#f5f8fc',
+    borderRadius: 8,
+    padding: 12,
+    gap: 6,
+  },
+  detailRow: { fontSize: 13, lineHeight: 19, color: '#444' },
+  detailLabel: { fontWeight: '700', color: '#222' },
+  detailNote: { fontSize: 12, color: '#666', fontStyle: 'italic', marginTop: 2 },
 });

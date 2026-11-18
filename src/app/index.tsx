@@ -1,8 +1,8 @@
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { router } from 'expo-router';
 import { AppColors } from '@/constants/theme';
 import { CARTOES_DEMO } from '@/data/cartoes';
 import { useCartoes } from '@/hooks/use-cartoes';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import {
   ScrollView,
@@ -118,6 +118,7 @@ export default function HomeScreen() {
           <Service
             icon="star-outline"
             title={'Clube\nRiocard'}
+            onPress={() => router.push('/clube-riocard')}
           />
 
           <Service
@@ -172,6 +173,7 @@ export default function HomeScreen() {
         <NavItem
           icon="star-outline"
           label="Clube"
+          onPress={() => router.push('/clube-riocard')}
         />
 
         <NavItem
