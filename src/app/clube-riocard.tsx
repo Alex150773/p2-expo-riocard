@@ -4,6 +4,50 @@ import { router } from 'expo-router';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+export type BeneficioDemo = {
+  id: string;
+  titulo: string;
+  categoria: string;
+  resumo: string;
+  regras: string;
+  validade: string;
+};
+
+const BENEFICIOS_DEMO: BeneficioDemo[] = [
+  {
+    id: 'ben-01',
+    titulo: 'Café Cultural Centro (Exemplo)',
+    categoria: 'Alimentação • Fictício',
+    resumo: 'Desconto ilustrativo de 15% em bebidas quentes para apresentação do cartão demonstrativo.',
+    regras: 'Benefício fictício criado apenas para simular a exibição de vantagens no aplicativo acadêmico.',
+    validade: 'Exemplo permanente de demonstração',
+  },
+  {
+    id: 'ben-02',
+    titulo: 'Livraria Estação Leitura (Exemplo)',
+    categoria: 'Cultura e Educação • Fictício',
+    resumo: 'Vale-leitura ilustrativo de R$ 10,00 em compras acima de R$ 60,00.',
+    regras: 'Não possui vínculo comercial real. Utilizado exclusivamente para testes de interface na disciplina.',
+    validade: 'Exemplo permanente de demonstração',
+  },
+  {
+    id: 'ben-03',
+    titulo: 'Cinema Bairro Modelo (Exemplo)',
+    categoria: 'Lazer • Fictício',
+    resumo: 'Meia-entrada demonstrativa em sessões de segunda a quarta-feira.',
+    regras: 'Oferta simulada sem integração com bilheterias ou estabelecimentos externos.',
+    validade: 'Exemplo permanente de demonstração',
+  },
+  {
+    id: 'ben-04',
+    titulo: 'Bicicletário Integrado Demo (Exemplo)',
+    categoria: 'Mobilidade • Fictício',
+    resumo: 'Primeira hora gratuita ilustrativa em bicicletários próximos a terminais.',
+    regras: 'Recurso conceitual apresentado apenas para fins de avaliação do projeto P2.',
+    validade: 'Exemplo permanente de demonstração',
+  },
+];
+
 export default function ClubeRiocardScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -19,17 +63,21 @@ export default function ClubeRiocardScreen() {
         <View style={styles.noticeBanner}>
           <Ionicons name="information-circle-outline" size={22} color={AppColors.azul} />
           <Text style={styles.noticeText}>
-            Demonstração acadêmica: os benefícios exibidos nesta seção são exclusivamente ilustrativos e não representam parcerias comerciais ou ofertas reais.
+            Demonstração acadêmica: todos os benefícios abaixo são fictícios e não representam parcerias comerciais ou ofertas reais.
           </Text>
         </View>
 
-        <View style={styles.placeholderCard}>
-          <Ionicons name="star-outline" size={34} color={AppColors.azul} />
-          <Text style={styles.placeholderTitle}>Clube Riocard demonstrativo</Text>
-          <Text style={styles.placeholderText}>
-            A lista de benefícios fictícios será adicionada na próxima etapa.
-          </Text>
-        </View>
+        <Text style={styles.sectionTitle}>Benefícios demonstrativos ({BENEFICIOS_DEMO.length})</Text>
+
+        {BENEFICIOS_DEMO.map((beneficio) => (
+          <View key={beneficio.id} style={styles.card}>
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{beneficio.categoria}</Text>
+            </View>
+            <Text style={styles.cardTitle}>{beneficio.titulo}</Text>
+            <Text style={styles.cardSummary}>{beneficio.resumo}</Text>
+          </View>
+        ))}
       </ScrollView>
     </SafeAreaView>
   );
@@ -60,15 +108,24 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   noticeText: { flex: 1, fontSize: 13, lineHeight: 19, color: '#2b4c73' },
-  placeholderCard: {
+  sectionTitle: { fontSize: 17, fontWeight: '700', color: '#333', marginBottom: 12 },
+  card: {
     backgroundColor: '#fff',
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#e4e4e4',
-    padding: 24,
-    alignItems: 'center',
-    gap: 8,
+    padding: 16,
+    marginBottom: 12,
+    gap: 6,
   },
-  placeholderTitle: { fontSize: 17, fontWeight: '700', color: '#333' },
-  placeholderText: { fontSize: 14, color: '#666', textAlign: 'center', lineHeight: 20 },
+  badge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#eef2f6',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  badgeText: { fontSize: 11, fontWeight: '700', color: AppColors.azul },
+  cardTitle: { fontSize: 17, fontWeight: '700', color: '#333', marginTop: 2 },
+  cardSummary: { fontSize: 14, lineHeight: 20, color: '#555' },
 });
